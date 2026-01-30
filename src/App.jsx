@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useParams } from 'react-router-dom';
+import portfolioData from './portfolioData.js';
 
 const customStyles = {
   container: {
@@ -285,6 +286,31 @@ const PaymentOptions = ({ name }) => {
             <span>Wire Transfer</span>
           </div>
         </label>
+        {selectedPayment === 'wire-transfer' && (
+          <details style={{ marginTop: '16px', padding: '20px', border: '2px solid #000000' }}>
+            <summary style={{ cursor: 'pointer', fontSize: '16px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Wire Details
+            </summary>
+            <div style={{ marginTop: '16px', fontSize: '16px', lineHeight: 1.6, opacity: 0.9 }}>
+              <p style={{ marginBottom: '12px' }}>Use the details below to send a wire. Include your project name in the memo.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px' }}>
+                <span style={{ fontWeight: 600 }}>Bank Name</span>
+                <span>YOUR BANK NAME</span>
+                <span style={{ fontWeight: 600 }}>Account Name</span>
+                <span>RENDER AI LLC</span>
+                <span style={{ fontWeight: 600 }}>Routing</span>
+                <span>XXXXXX</span>
+                <span style={{ fontWeight: 600 }}>Account</span>
+                <span>XXXXXX</span>
+                <span style={{ fontWeight: 600 }}>SWIFT</span>
+                <span>XXXXXX</span>
+              </div>
+              <p style={{ marginTop: '16px', fontSize: '14px', opacity: 0.7 }}>
+                Need a secure portal link? Reply to the confirmation email and we’ll send it.
+              </p>
+            </div>
+          </details>
+        )}
       </div>
     </>
   );
@@ -359,7 +385,7 @@ const HomePage = () => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    navigate('/confirmation');
+    navigate('/inquiry-confirmation');
   };
 
   return (
@@ -545,136 +571,7 @@ const AboutPage = () => {
   );
 };
 
-const portfolioItems = [
-  {
-    slug: "glass-pavilion",
-    title: "The Glass Pavilion",
-    tag: "Res-Exterior",
-    location: "Hudson Valley",
-    renderTime: "12H",
-    image: "https://images.unsplash.com/photo-1600607687920-4e2a09697d6b?auto=format&fit=crop&q=80&w=1200",
-    brief: "A transparent weekend retreat that dissolves into the tree line.",
-    scope: "Single-family residence with full landscape integration.",
-    deliverables: [
-      "Hero exterior render (4K)",
-      "Twilight mood variant",
-      "Landscape material palette study"
-    ],
-    tools: ["Rhino", "V-Ray", "Photoshop"],
-    timeline: [
-      { title: "Site + Massing", description: "Context modeling and preliminary massing studies." },
-      { title: "Material Studies", description: "Glass reflectivity tuning and stone detailing." },
-      { title: "Final Output", description: "Day + dusk finals with graded atmosphere." }
-    ]
-  },
-  {
-    slug: "concrete-loft-interior",
-    title: "Concrete Loft Interior",
-    tag: "Res-Interior",
-    location: "Berlin",
-    renderTime: "24H",
-    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1200",
-    brief: "Soft light meets raw structure in a minimalist city loft.",
-    scope: "Open-plan living + kitchen with custom millwork.",
-    deliverables: [
-      "Primary interior perspective (4K)",
-      "Kitchen vignette detail",
-      "Material + lighting pass"
-    ],
-    tools: ["3ds Max", "Corona", "Photoshop"],
-    timeline: [
-      { title: "Layout Block-in", description: "Camera selection and spatial composition." },
-      { title: "Lighting + Mood", description: "Warm indirect lighting with soft shadows." },
-      { title: "Final Output", description: "Polished detail pass and export." }
-    ]
-  },
-  {
-    slug: "sunset-hills-development",
-    title: "Sunset Hills Development",
-    tag: "Res-Aerial",
-    location: "Portland",
-    renderTime: "36H",
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200",
-    brief: "Aerial storytelling for a hillside residential community.",
-    scope: "Full site model with context and terrain.",
-    deliverables: [
-      "Aerial hero view (4K)",
-      "Context topology diagram",
-      "Massing + planting pass"
-    ],
-    tools: ["SketchUp", "V-Ray", "Photoshop"],
-    timeline: [
-      { title: "Site Modeling", description: "Terrain sculpting and base massing." },
-      { title: "Context Layering", description: "Trees, streets, and surrounding geometry." },
-      { title: "Final Output", description: "High altitude render with clear legibility." }
-    ]
-  },
-  {
-    slug: "axis-commercial-tower",
-    title: "Axis Commercial Tower",
-    tag: "Com-Exterior",
-    location: "Tokyo",
-    renderTime: "48H",
-    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200",
-    brief: "A high-contrast skyline statement for a mixed-use tower.",
-    scope: "Street-level hero with branding and urban context.",
-    deliverables: [
-      "Daytime hero render (4K)",
-      "Brand signage integration",
-      "People + traffic entourage"
-    ],
-    tools: ["Revit", "V-Ray", "Photoshop"],
-    timeline: [
-      { title: "Facade Study", description: "Glazing ratios and mullion refinement." },
-      { title: "Street Life", description: "Entourage pass for scale and activity." },
-      { title: "Final Output", description: "High-contrast daylight render." }
-    ]
-  },
-  {
-    slug: "flagship-retail-space",
-    title: "Flagship Retail Space",
-    tag: "Com-Interior",
-    location: "Paris",
-    renderTime: "60H",
-    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&q=80&w=1200",
-    brief: "A soft-brutalist retail experience with sculptural lighting.",
-    scope: "Customer journey renders for a luxury brand.",
-    deliverables: [
-      "Main retail floor render (4K)",
-      "Product display vignette",
-      "Lighting + material refinement"
-    ],
-    tools: ["Cinema4D", "Octane", "Photoshop"],
-    timeline: [
-      { title: "Concepting", description: "Spatial rhythm and focal points." },
-      { title: "Lighting Design", description: "IES-driven artificial lighting." },
-      { title: "Final Output", description: "High-end finishing and export." }
-    ]
-  },
-  {
-    slug: "tech-campus-masterplan",
-    title: "Tech Campus Masterplan",
-    tag: "Com-Aerial",
-    location: "Austin",
-    renderTime: "72H",
-    image: "https://images.unsplash.com/photo-1565008576549-57569a49371d?auto=format&fit=crop&q=80&w=1200",
-    brief: "Aerial masterplan with clear circulation and campus identity.",
-    scope: "Multi-building site planning and landscape integration.",
-    deliverables: [
-      "Aerial campus render (4K)",
-      "Site circulation overlay",
-      "Landscape + parking study"
-    ],
-    tools: ["Rhino", "Lumion", "Photoshop"],
-    timeline: [
-      { title: "Site Strategy", description: "Program distribution and access planning." },
-      { title: "Landscape Pass", description: "Green spaces and pedestrian flow." },
-      { title: "Final Output", description: "Clear aerial with campus branding." }
-    ]
-  }
-];
-
-const PortfolioPage = () => {
+const PortfolioPage = ({ items }) => {
   const navigate = useNavigate();
 
   return (
@@ -705,7 +602,7 @@ const PortfolioPage = () => {
         <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '64px', border: 'none' }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
-          {portfolioItems.map((item, index) => (
+          {items.map((item, index) => (
             <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{
                 aspectRatio: '16/9',
@@ -933,10 +830,10 @@ const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceN
   );
 };
 
-const PortfolioDetailPage = () => {
+const PortfolioDetailPage = ({ items }) => {
   const navigate = useNavigate();
   const { slug } = useParams();
-  const item = portfolioItems.find((entry) => entry.slug === slug);
+  const item = items.find((entry) => entry.slug === slug);
 
   if (!item) {
     return (
@@ -1174,7 +1071,81 @@ const ConfirmationPage = () => {
   );
 };
 
+const InquiryConfirmationPage = () => {
+  const navigate = useNavigate();
+
+  return (
+    <section style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeIn 0.5s ease-out' }}>
+      <div style={{ fontSize: '64px', marginBottom: '32px' }}>✓</div>
+      <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '20px' }}>
+        Inquiry Received
+      </h2>
+      <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px auto', maxWidth: '400px', border: 'none' }} />
+      <p style={{ fontSize: '20px', lineHeight: 1.6, opacity: 0.8, marginBottom: '40px', maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' }}>
+        Thanks for reaching out. We’ll review your details and get back to you as soon as possible.
+      </p>
+
+      <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '40px', margin: '40px 0', textAlign: 'left' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '24px', letterSpacing: '0.05em' }}>
+          What Happens Next
+        </h3>
+
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>01</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>We Review Your Inquiry</strong>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>Our team will review your project details and determine the best package.</p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>02</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>We Follow Up</strong>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>We’ll reach out with a timeline, cost, and any clarifying questions.</p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '20px' }}>
+          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>03</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Kickoff</strong>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>Once approved, we’ll start production and share the first draft.</p>
+          </div>
+        </div>
+      </div>
+
+      <p style={{ fontSize: '16px', opacity: 0.6, marginBottom: '40px' }}>
+        Need to add more details? Email us at <span style={{ color: '#FF4500', fontWeight: 600 }}>hello@render-ai.com</span>
+      </p>
+
+      <button
+        onClick={() => navigate('/')}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          textAlign: 'center',
+          fontSize: '18px',
+          fontWeight: 400,
+          cursor: 'pointer',
+          padding: '20px 0',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '10px',
+          transition: 'color 0.2s',
+          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+          margin: '0 auto'
+        }}
+      >
+        <span>←</span> Back to Home
+      </button>
+    </section>
+  );
+};
+
 const App = () => {
+  const [portfolioItems, setPortfolioItems] = useState(portfolioData);
+
   useEffect(() => {
     const linkElement = document.createElement('link');
     linkElement.rel = 'preconnect';
@@ -1301,6 +1272,25 @@ const App = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const loadPortfolio = async () => {
+      try {
+        const response = await fetch('/portfolio.json', { cache: 'no-store' });
+        if (!response.ok) {
+          return;
+        }
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setPortfolioItems(data);
+        }
+      } catch (error) {
+        console.error('Failed to load portfolio.json', error);
+      }
+    };
+
+    loadPortfolio();
+  }, []);
+
   return (
     <Router basename="/">
       <div style={customStyles.root} data-app="render-ai">
@@ -1310,8 +1300,8 @@ const App = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/portfolio" element={<PortfolioPage />} />
-            <Route path="/portfolio/:slug" element={<PortfolioDetailPage />} />
+            <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
+            <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
             <Route path="/residential-exterior" element={
               <ServiceDetailPage 
                 price="500"
@@ -1444,6 +1434,7 @@ const App = () => {
               />
             } />
             <Route path="/confirmation" element={<ConfirmationPage />} />
+            <Route path="/inquiry-confirmation" element={<InquiryConfirmationPage />} />
           </Routes>
           
           <Footer />

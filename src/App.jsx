@@ -5,7 +5,7 @@ const customStyles = {
   container: {
     width: '100%',
     maxWidth: '100%',
-    padding: '40px 60px 120px 60px',
+    padding: '40px clamp(16px, 4vw, 60px) 120px clamp(16px, 4vw, 60px)',
     display: 'flex',
     flexDirection: 'column'
   },
@@ -1207,11 +1207,87 @@ const App = () => {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      @media (max-width: 600px) {
+      @media (max-width: 720px) {
+        [data-app] {
+          width: 100% !important;
+        }
+        [data-app] > div {
+          padding: 28px 16px 80px 16px !important;
+        }
         nav {
           flex-direction: column !important;
           align-items: flex-start !important;
-          gap: 20px !important;
+          gap: 16px !important;
+          margin-bottom: 48px !important;
+        }
+        nav ul {
+          flex-wrap: wrap !important;
+          gap: 12px 16px !important;
+          font-size: 12px !important;
+        }
+        h1 {
+          font-size: 32px !important;
+          line-height: 0.9 !important;
+        }
+        h2 {
+          font-size: clamp(22px, 6vw, 32px) !important;
+          line-height: 1.15 !important;
+          word-break: break-word !important;
+          overflow-wrap: anywhere !important;
+        }
+        h3 {
+          font-size: 18px !important;
+          line-height: 1.2 !important;
+        }
+        p {
+          font-size: 16px !important;
+          line-height: 1.5 !important;
+        }
+        section {
+          margin-bottom: 56px !important;
+        }
+        hr {
+          margin-top: 16px !important;
+          margin-bottom: 16px !important;
+        }
+        form {
+          gap: 28px !important;
+        }
+        input {
+          font-size: 18px !important;
+          padding: 12px 0 !important;
+        }
+        button {
+          font-size: 20px !important;
+          padding: 16px 0 !important;
+        }
+        ul {
+          padding-left: 0 !important;
+        }
+        [data-app] a {
+          white-space: nowrap !important;
+        }
+        [data-app] [style*="gridTemplateColumns: '1fr 1fr'"] {
+          grid-template-columns: 1fr !important;
+        }
+        [data-app] [style*="gridTemplateColumns: '100px 1fr auto'"] {
+          grid-template-columns: 70px 1fr auto !important;
+          gap: 12px !important;
+        }
+        [data-app] [style*="fontSize: '32px'"] {
+          font-size: 22px !important;
+        }
+        [data-app] [style*="fontSize: '28px'"] {
+          font-size: 20px !important;
+        }
+        [data-app] [style*="fontSize: '24px'"] {
+          font-size: 18px !important;
+        }
+        [data-app] [style*="padding: '40px'"] {
+          padding: 24px !important;
+        }
+        [data-app] [style*="padding: '24px'"] {
+          padding: 16px !important;
         }
       }
     `;
@@ -1227,7 +1303,7 @@ const App = () => {
 
   return (
     <Router basename="/">
-      <div style={customStyles.root}>
+      <div style={customStyles.root} data-app="render-ai">
         <div style={customStyles.container}>
           <Header />
           

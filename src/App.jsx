@@ -32,7 +32,8 @@ const ServiceRow = ({ price, title, tag, onClick }) => {
 
   return (
     <>
-      <div 
+      <div
+        data-service-row
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -48,13 +49,13 @@ const ServiceRow = ({ price, title, tag, onClick }) => {
           backgroundColor: isHovered ? 'rgba(0,0,0,0.02)' : 'transparent'
         }}
       >
-        <div style={{ fontSize: '32px', fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1, color: '#FF4500' }}>
+        <div data-service-price style={{ fontSize: '32px', fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1, color: '#FF4500' }}>
           ${price}
         </div>
-        <div style={{ fontSize: '32px', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+        <div data-service-title style={{ fontSize: '32px', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
           {title} <span style={{ fontSize: '14px', verticalAlign: 'middle', marginLeft: '10px', fontWeight: 400, display: 'inline-block', opacity: 0.6 }}>({tag})</span>
         </div>
-        <div style={{ fontSize: '16px', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div data-service-cta style={{ fontSize: '16px', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ color: '#FF4500' }}>Start</span> 
           <span style={{ transition: 'transform 0.2s ease', transform: isHovered ? 'translateX(5px)' : 'translateX(0)' }}>→</span>
         </div>
@@ -1183,13 +1184,13 @@ const App = () => {
           width: 100% !important;
         }
         [data-app] > div {
-          padding: 28px 16px 80px 16px !important;
+          padding: 20px 16px 56px 16px !important;
         }
         nav {
           flex-direction: column !important;
           align-items: flex-start !important;
-          gap: 16px !important;
-          margin-bottom: 48px !important;
+          gap: 12px !important;
+          margin-bottom: 24px !important;
         }
         nav ul {
           flex-wrap: wrap !important;
@@ -1215,14 +1216,14 @@ const App = () => {
           line-height: 1.5 !important;
         }
         section {
-          margin-bottom: 56px !important;
+          margin-bottom: 28px !important;
         }
         hr {
-          margin-top: 16px !important;
-          margin-bottom: 16px !important;
+          margin-top: 8px !important;
+          margin-bottom: 8px !important;
         }
         form {
-          gap: 28px !important;
+          gap: 14px !important;
         }
         input {
           font-size: 18px !important;
@@ -1230,7 +1231,7 @@ const App = () => {
         }
         button {
           font-size: 20px !important;
-          padding: 16px 0 !important;
+          padding: 12px 0 !important;
         }
         ul {
           padding-left: 0 !important;
@@ -1245,6 +1246,23 @@ const App = () => {
           grid-template-columns: 70px 1fr auto !important;
           gap: 12px !important;
         }
+        [data-service-row] {
+          padding: 26px 0 !important;
+        }
+        [data-service-price] {
+          font-size: 26px !important;
+        }
+        [data-service-title] {
+          font-size: 26px !important;
+          line-height: 1.12 !important;
+        }
+        [data-service-cta] {
+          font-size: 16px !important;
+        }
+        [data-service-title] span {
+          font-size: 13px !important;
+          margin-left: 8px !important;
+        }
         [data-app] [style*="fontSize: '32px'"] {
           font-size: 22px !important;
         }
@@ -1255,10 +1273,10 @@ const App = () => {
           font-size: 18px !important;
         }
         [data-app] [style*="padding: '40px'"] {
-          padding: 24px !important;
+          padding: 20px !important;
         }
         [data-app] [style*="padding: '24px'"] {
-          padding: 16px !important;
+          padding: 12px !important;
         }
       }
     `;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useParams, useLocation } from 'react-router-dom';
 import portfolioData from './portfolioData.js';
 
 const customStyles = {
@@ -352,9 +352,9 @@ const Header = () => {
         display: 'flex',
         gap: '24px'
       }}>
-        <li><a href="#services" style={{ textDecoration: 'none', color: 'inherit' }}>Pricing</a></li>
+        <li><Link to="/#services" style={{ textDecoration: 'none', color: 'inherit' }}>Pricing</Link></li>
         <li><Link to="/portfolio" style={{ textDecoration: 'none', color: 'inherit' }}>Portfolio</Link></li>
-        <li><a href="#contact" style={{ textDecoration: 'none', color: 'inherit' }}>Contact</a></li>
+        <li><Link to="/#contact" style={{ textDecoration: 'none', color: 'inherit' }}>Contact</Link></li>
         <li><Link to="/about" style={{ textDecoration: 'none', color: 'inherit' }}>About</Link></li>
       </ul>
     </nav>
@@ -966,26 +966,27 @@ const PortfolioDetailPage = ({ items }) => {
               Tell us about your project and we’ll recommend the right rendering package.
             </p>
           </div>
-          <button
-            onClick={() => navigate('/#contact')}
-            style={{
-              background: 'transparent',
-              border: '2px solid #000000',
-              textAlign: 'center',
-              fontSize: '18px',
-              fontWeight: 400,
-              cursor: 'pointer',
-              padding: '16px 24px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              transition: 'color 0.2s',
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Start a Project <span>→</span>
-          </button>
+          <Link to="/#contact" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div
+              style={{
+                background: 'transparent',
+                border: '2px solid #000000',
+                textAlign: 'center',
+                fontSize: '18px',
+                fontWeight: 400,
+                cursor: 'pointer',
+                padding: '16px 24px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                transition: 'color 0.2s',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Start a Project <span>→</span>
+            </div>
+          </Link>
         </div>
       </section>
     </>
@@ -1142,6 +1143,22 @@ const InquiryConfirmationPage = () => {
       </button>
     </section>
   );
+};
+
+const ScrollToHash = () => {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) {
+      return;
+    }
+    const element = document.querySelector(hash);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [hash]);
+
+  return null;
 };
 
 const App = () => {
@@ -1311,6 +1328,7 @@ const App = () => {
 
   return (
     <Router basename="/">
+      <ScrollToHash />
       <div style={customStyles.root} data-app="render-ai">
         <div style={customStyles.container}>
           <Header />

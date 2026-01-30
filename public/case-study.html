@@ -1,0 +1,414 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">LUMINAIRE PENTHOUSE | CASE STUDY | RENDER_AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="5">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="6">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&amp;display=swap" rel="stylesheet" vid="7">
+    <style vid="8">
+        :root {
+            --bg-color: #F4F4F4; 
+            --ink-color: #000000;
+            --red-orange: #FF4500;
+            --line-weight: 2px;
+            --font-main: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            --header-height: 100px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--ink-color);
+            font-family: var(--font-main);
+            overflow-x: hidden;
+            width: 100vw;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        .top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--header-height);
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 60px;
+            z-index: 1000;
+            border-bottom: var(--line-weight) solid var(--ink-color);
+        }
+
+        .logo-text {
+            font-weight: 900;
+            font-size: 32px;
+            line-height: 0.85;
+            text-transform: uppercase;
+            letter-spacing: -0.04em;
+        }
+
+        .meta-list {
+            list-style: none;
+            text-transform: uppercase;
+            font-size: 14px;
+            line-height: 1.4;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            display: flex;
+            gap: 40px;
+        }
+
+        .content {
+            padding: calc(var(--header-height) + 60px) 0 100px 0; 
+            max-width: 100%;
+        }
+
+        .hero-section {
+            padding: 0 60px;
+            margin-bottom: 80px;
+        }
+
+        .stencil-header {
+            font-weight: 900;
+            font-size: clamp(40px, 6vw, 100px);
+            line-height: 0.85;
+            text-transform: uppercase;
+            letter-spacing: -0.04em;
+            margin-bottom: 40px;
+        }
+
+        .back-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+            margin-bottom: 40px;
+            cursor: pointer;
+        }
+
+        .case-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-top: var(--line-weight) solid var(--ink-color);
+        }
+
+        .case-sidebar {
+            padding: 60px;
+            border-right: var(--line-weight) solid var(--ink-color);
+        }
+
+        .case-main {
+            padding: 60px;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--red-orange);
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .case-title {
+            font-size: 48px;
+            font-weight: 400;
+            margin-bottom: 30px;
+            line-height: 1.1;
+        }
+
+        .case-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: rgba(0,0,0,0.8);
+            margin-bottom: 40px;
+        }
+
+        .spec-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .spec-item span {
+            display: block;
+            font-size: 12px;
+            opacity: 0.5;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .spec-item p {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .full-width-img {
+            width: 100%;
+            height: auto;
+            border: var(--line-weight) solid var(--ink-color);
+            margin-bottom: 80px;
+        }
+
+        .process-flow {
+            margin-top: 100px;
+            padding: 0 60px;
+        }
+
+        .process-step {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 60px;
+            margin-bottom: 120px;
+            align-items: center;
+        }
+
+        .step-info h3 {
+            font-size: 32px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .step-img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border: var(--line-weight) solid var(--ink-color);
+        }
+
+        .testimonial-block {
+            background: var(--ink-color);
+            color: var(--bg-color);
+            padding: 80px 60px;
+            margin-top: 100px;
+        }
+
+        .quote-text {
+            font-size: 36px;
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .quote-author {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metrics-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 60px;
+            border-top: var(--line-weight) solid var(--ink-color);
+            border-bottom: var(--line-weight) solid var(--ink-color);
+            background: white;
+        }
+
+        .metric-item {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--red-orange);
+            display: block;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+
+        .related-section {
+            padding: 100px 60px;
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .related-card {
+            border: var(--line-weight) solid var(--ink-color);
+            overflow: hidden;
+        }
+
+        .related-card img {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border-bottom: var(--line-weight) solid var(--ink-color);
+        }
+
+        .related-info {
+            padding: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .case-grid, .process-step, .metrics-bar, .related-grid {
+                grid-template-columns: 1fr;
+            }
+            .case-sidebar { border-right: none; border-bottom: var(--line-weight) solid var(--ink-color); }
+            .hero-section, .process-flow, .testimonial-block, .related-section, .top-header { padding: 0 20px; }
+            .content { padding-top: 120px; }
+        }
+    </style>
+</head>
+<body vid="9">
+
+    <header class="top-header" vid="10">
+        <div class="logo-text" vid="11"><a href="/" vid="12">RENDER_AI</a></div>
+        <nav vid="13">
+            <ul class="meta-list" vid="14">
+                <li vid="15"><a href="/#services" vid="16">Services</a></li>
+                <li vid="17"><a href="#" style="color: var(--red-orange);" vid="18">Portfolio</a></li>
+                <li vid="19"><a href="/#pricing" vid="20">Pricing</a></li>
+                <li vid="21"><a href="/#contact" vid="22">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="content" vid="23">
+        <section class="hero-section" vid="200">
+            <a href="javascript:history.back()" class="back-nav" vid="201">← Back to Portfolio</a>
+            <h1 class="stencil-header" vid="202">Luminaire Penthouse</h1>
+        </section>
+
+        <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&amp;fit=crop&amp;w=2400&amp;q=90" class="full-width-img" alt="Main Render Hero" vid="203">
+
+        <div class="case-grid" vid="204">
+            <aside class="case-sidebar" vid="205">
+                <span class="section-label" vid="206">Overview</span>
+                <h2 class="case-title" vid="207">Redefining High-End Residential Visualization</h2>
+                <p class="case-text" vid="208">
+                    Moderne Studio approached us to visualize their flagship project: a 5,000 sq ft penthouse in Dubai. The goal was to create marketing assets that didn't just show the space, but captured the "golden hour" atmosphere and tactile luxury of the custom material palette.
+                </p>
+                <div class="spec-grid" vid="209">
+                    <div class="spec-item" vid="210"><span>Client</span><p vid="211">Moderne Studio</p></div>
+                    <div class="spec-item" vid="212"><span>Timeline</span><p vid="213">4 Business Days</p></div>
+                    <div class="spec-item" vid="214"><span>Output</span><p vid="215">8K Stills + 360 VR</p></div>
+                    <div class="spec-item" vid="216"><span>Tech Stack</span><p vid="217">Render_AI v4.2</p></div>
+                </div>
+            </aside>
+            <main class="case-main" vid="218">
+                <span class="section-label" vid="219">The Challenge</span>
+                <p class="case-text" vid="220">
+                    The primary challenge lay in the complex lighting interaction between the floor-to-ceiling glass facades and the dark, reflective marble surfaces. Traditional path-tracing often struggles with noise in such high-contrast scenarios. We needed to leverage our proprietary AI denoising and light-transport algorithms to ensure every reflection was physically accurate yet artistically compelling.
+                </p>
+                <span class="section-label" vid="221">Technical Approach</span>
+                <p class="case-text" vid="222">
+                    Utilizing our Neural Material Engine, we scanned physical samples provided by the interior designers to generate custom 8K PBR textures. The lighting was simulated using a hybrid AI-GPGPU approach, allowing us to compute millions of light bounces in seconds, achieving a level of depth that manual lighting setups often miss.
+                </p>
+            </main>
+        </div>
+
+        <section class="process-flow" vid="223">
+            <h2 class="stencil-header" style="font-size: 60px;" vid="224">The Process</h2>
+            
+            <div class="process-step" vid="225">
+                <div class="step-info" vid="226">
+                    <span class="section-label" vid="227">Stage 01</span>
+                    <h3 vid="228">Volume &amp; Light Blocking</h3>
+                    <p class="case-text" vid="229">Initial architectural geometry import and primary light source calibration. We focus on the "bones" of the image, establishing the visual hierarchy and shadow patterns.</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&amp;fit=crop&amp;w=1200&amp;q=80" class="step-img" alt="Blocking Stage" vid="230">
+            </div>
+
+            <div class="process-step" vid="231">
+                <div class="step-info" vid="232">
+                    <span class="section-label" vid="233">Stage 02</span>
+                    <h3 vid="234">Material Synthesis</h3>
+                    <p class="case-text" vid="235">AI-driven texture application. Here we apply the complex materiality—veined marble, brushed brass, and silk upholstery—ensuring correct fresnel and roughness values.</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1600607687644-c7171b42498b?auto=format&amp;fit=crop&amp;w=1200&amp;q=80" class="step-img" alt="Material Stage" vid="236">
+            </div>
+
+            <div class="process-step" vid="237">
+                <div class="step-info" vid="238">
+                    <span class="section-label" vid="239">Stage 03</span>
+                    <h3 vid="240">Final Neural Upscaling</h3>
+                    <p class="case-text" vid="241">The final 8K pass. Our AI enhances micro-details, adds subtle atmospheric haze, and performs color grading to match the desired "Penthouse" aesthetic.</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&amp;fit=crop&amp;w=1200&amp;q=80" class="step-img" alt="Final Render" vid="242">
+            </div>
+        </section>
+
+        <div class="metrics-bar" vid="243">
+            <div class="metric-item" vid="244">
+                <span class="metric-value" vid="245">92%</span>
+                <span class="metric-label" vid="246">Faster Rendering</span>
+            </div>
+            <div class="metric-item" vid="247">
+                <span class="metric-value" vid="248">8K</span>
+                <span class="metric-label" vid="249">Native Resolution</span>
+            </div>
+            <div class="metric-item" vid="250">
+                <span class="metric-value" vid="251">12</span>
+                <span class="metric-label" vid="252">Custom Materials</span>
+            </div>
+            <div class="metric-item" vid="253">
+                <span class="metric-value" vid="254">4.9/5</span>
+                <span class="metric-label" vid="255">Client Satisfaction</span>
+            </div>
+        </div>
+
+        <section class="testimonial-block" vid="256">
+            <blockquote class="quote-text" vid="257">
+                "The level of realism achieved in the Luminaire project was staggering. RENDER_AI managed to capture the exact mood we had designed for. It wasn't just a render; it was an experience."
+            </blockquote>
+            <p class="quote-author" vid="258">— Julian Vance, Creative Director at Moderne Studio</p>
+        </section>
+
+        <section class="related-section" vid="259">
+            <h2 class="stencil-header" style="font-size: 40px;" vid="260">Related Projects</h2>
+            <div class="related-grid" vid="261">
+                <a href="#" class="related-card" vid="262">
+                    <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Related 1" vid="263">
+                    <div class="related-info" vid="264">
+                        <span class="section-label" style="margin-bottom: 5px;" vid="265">Interior</span>
+                        <h4 vid="266">Zen Sanctuary</h4>
+                    </div>
+                </a>
+                <a href="#" class="related-card" vid="267">
+                    <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Related 2" vid="268">
+                    <div class="related-info" vid="269">
+                        <span class="section-label" style="margin-bottom: 5px;" vid="270">Exterior</span>
+                        <h4 vid="271">The Obsidian Villa</h4>
+                    </div>
+                </a>
+                <a href="#" class="related-card" vid="272">
+                    <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&amp;fit=crop&amp;w=800&amp;q=80" alt="Related 3" vid="273">
+                    <div class="related-info" vid="274">
+                        <span class="section-label" style="margin-bottom: 5px;" vid="275">Residential</span>
+                        <h4 vid="276">Glass Pavilion</h4>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer style="padding: 60px; border-top: var(--line-weight) solid var(--ink-color); text-align: center;" vid="277">
+        <p style="font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px;" vid="278">© 2024 RENDER_AI / ALL RIGHTS RESERVED</p>
+    </footer>
+
+</body></html>

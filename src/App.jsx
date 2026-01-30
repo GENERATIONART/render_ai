@@ -1,0 +1,1380 @@
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useParams } from 'react-router-dom';
+
+const customStyles = {
+  container: {
+    width: '100%',
+    maxWidth: '100%',
+    padding: '40px 60px 120px 60px',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  root: {
+    fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+    backgroundColor: '#F4F4F4',
+    color: '#000000',
+    width: '100vw',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    margin: 0,
+    padding: 0,
+    WebkitFontSmoothing: 'antialiased',
+    MozOsxFontSmoothing: 'grayscale',
+    overflowX: 'hidden'
+  }
+};
+
+const ServiceRow = ({ price, title, tag, onClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <>
+      <div 
+        onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '100px 1fr auto',
+          alignItems: 'baseline',
+          padding: '32px 0',
+          position: 'relative',
+          cursor: 'pointer',
+          gap: '20px',
+          transition: 'background 0.2s',
+          backgroundColor: isHovered ? 'rgba(0,0,0,0.02)' : 'transparent'
+        }}
+      >
+        <div style={{ fontSize: '32px', fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1, color: '#FF4500' }}>
+          ${price}
+        </div>
+        <div style={{ fontSize: '32px', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+          {title} <span style={{ fontSize: '14px', verticalAlign: 'middle', marginLeft: '10px', fontWeight: 400, display: 'inline-block', opacity: 0.6 }}>({tag})</span>
+        </div>
+        <div style={{ fontSize: '16px', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: '#FF4500' }}>Start</span> 
+          <span style={{ transition: 'transform 0.2s ease', transform: isHovered ? 'translateX(5px)' : 'translateX(0)' }}>→</span>
+        </div>
+      </div>
+      <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
+    </>
+  );
+};
+
+const FileUpload = ({ id, fileListId }) => {
+  const [files, setFiles] = useState([]);
+
+  const handleFileChange = (e) => {
+    const newFiles = Array.from(e.target.files);
+    setFiles([...files, ...newFiles]);
+  };
+
+  const removeFile = (index) => {
+    setFiles(files.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div style={{ margin: '40px 0' }}>
+      <div 
+        onClick={() => document.getElementById(id).click()}
+        style={{
+          border: '2px dashed #000000',
+          padding: '40px 24px',
+          textAlign: 'center',
+          transition: 'all 0.2s',
+          cursor: 'pointer',
+          background: 'transparent'
+        }}
+      >
+        <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.3 }}>📁</div>
+        <div style={{ fontSize: '18px', fontWeight: 500, marginBottom: '8px' }}>Click to upload or drag files here</div>
+        <div style={{ fontSize: '14px', opacity: 0.6 }}>All file types accepted: CAD, images, PDFs, sketches, photos, videos (Max 100MB per file)</div>
+      </div>
+      <input 
+        type="file" 
+        id={id}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        multiple 
+        accept="*"
+      />
+      {files.length > 0 && (
+        <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {files.map((file, index) => (
+            <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #000000', fontSize: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span>📄</span>
+                <span>{file.name}</span>
+              </div>
+              <span 
+                onClick={() => removeFile(index)}
+                style={{ cursor: 'pointer', padding: '4px 8px', opacity: 0.6, transition: 'opacity 0.2s' }}
+              >
+                ✕
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ marginTop: '32px', padding: '24px', backgroundColor: 'rgba(0,0,0,0.02)' }}>
+        <h4 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>For Best Results, Include:</h4>
+        <ul style={{ listStyle: 'none', fontSize: '14px', lineHeight: 1.8 }}>
+          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Photo references for style direction</li>
+          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Hand sketches or digital drawings</li>
+          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>CAD files (SKP, RVT, DWG, Rhino)</li>
+          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Material samples or mood boards</li>
+          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Furniture and decor inspiration images</li>
+          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Lighting references and time-of-day preferences</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+const PaymentOptions = ({ name }) => {
+  const [selectedPayment, setSelectedPayment] = useState('apple-pay');
+
+  return (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <label style={{ cursor: 'pointer', display: 'block' }}>
+          <input 
+            type="radio" 
+            name={name}
+            value="apple-pay" 
+            checked={selectedPayment === 'apple-pay'}
+            onChange={() => setSelectedPayment('apple-pay')}
+            style={{ display: 'none' }}
+          />
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '20px',
+            border: '2px solid #000000',
+            transition: 'all 0.2s',
+            fontSize: '18px',
+            fontWeight: 500,
+            backgroundColor: selectedPayment === 'apple-pay' ? '#000000' : 'transparent',
+            color: selectedPayment === 'apple-pay' ? '#F4F4F4' : '#000000'
+          }}>
+            <span>Apple Pay</span>
+          </div>
+        </label>
+        
+        <label style={{ cursor: 'pointer', display: 'block' }}>
+          <input 
+            type="radio" 
+            name={name}
+            value="credit-card"
+            checked={selectedPayment === 'credit-card'}
+            onChange={() => setSelectedPayment('credit-card')}
+            style={{ display: 'none' }}
+          />
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '20px',
+            border: '2px solid #000000',
+            transition: 'all 0.2s',
+            fontSize: '18px',
+            fontWeight: 500,
+            backgroundColor: selectedPayment === 'credit-card' ? '#000000' : 'transparent',
+            color: selectedPayment === 'credit-card' ? '#F4F4F4' : '#000000'
+          }}>
+            <span>Credit Card</span>
+          </div>
+        </label>
+        
+        {selectedPayment === 'credit-card' && (
+          <div style={{ marginTop: '24px', padding: '24px', border: '2px solid #000000', animation: 'fadeIn 0.3s ease-out' }}>
+            <input 
+              type="text" 
+              placeholder="Card Number" 
+              maxLength="19"
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #000000',
+                padding: '12px 0',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: '16px',
+                color: '#000000',
+                marginBottom: '20px',
+                outline: 'none'
+              }}
+            />
+            <input 
+              type="text" 
+              placeholder="Cardholder Name"
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #000000',
+                padding: '12px 0',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: '16px',
+                color: '#000000',
+                marginBottom: '20px',
+                outline: 'none'
+              }}
+            />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <input 
+                type="text" 
+                placeholder="MM/YY" 
+                maxLength="5"
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '2px solid #000000',
+                  padding: '12px 0',
+                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                  fontSize: '16px',
+                  color: '#000000',
+                  outline: 'none'
+                }}
+              />
+              <input 
+                type="text" 
+                placeholder="CVV" 
+                maxLength="3"
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '2px solid #000000',
+                  padding: '12px 0',
+                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                  fontSize: '16px',
+                  color: '#000000',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+        )}
+        
+        <label style={{ cursor: 'pointer', display: 'block' }}>
+          <input 
+            type="radio" 
+            name={name}
+            value="wire-transfer"
+            checked={selectedPayment === 'wire-transfer'}
+            onChange={() => setSelectedPayment('wire-transfer')}
+            style={{ display: 'none' }}
+          />
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '20px',
+            border: '2px solid #000000',
+            transition: 'all 0.2s',
+            fontSize: '18px',
+            fontWeight: 500,
+            backgroundColor: selectedPayment === 'wire-transfer' ? '#000000' : 'transparent',
+            color: selectedPayment === 'wire-transfer' ? '#F4F4F4' : '#000000'
+          }}>
+            <span>Wire Transfer</span>
+          </div>
+        </label>
+      </div>
+    </>
+  );
+};
+
+const Header = () => {
+  const navigate = useNavigate();
+
+  return (
+    <nav style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '20px 0',
+      marginBottom: '80px',
+      position: 'relative',
+      zIndex: 50
+    }}>
+      <h1 
+        onClick={() => navigate('/')}
+        style={{
+          fontWeight: 900,
+          fontSize: '40px',
+          lineHeight: 0.85,
+          textTransform: 'uppercase',
+          letterSpacing: '-0.04em',
+          cursor: 'pointer'
+        }}
+      >
+        RENDER_AI
+      </h1>
+      <ul style={{
+        listStyle: 'none',
+        textTransform: 'uppercase',
+        fontSize: '14px',
+        fontWeight: 500,
+        letterSpacing: '0.05em',
+        display: 'flex',
+        gap: '24px'
+      }}>
+        <li><a href="#services" style={{ textDecoration: 'none', color: 'inherit' }}>Pricing</a></li>
+        <li><Link to="/portfolio" style={{ textDecoration: 'none', color: 'inherit' }}>Portfolio</Link></li>
+        <li><a href="#contact" style={{ textDecoration: 'none', color: 'inherit' }}>Contact</a></li>
+        <li><Link to="/about" style={{ textDecoration: 'none', color: 'inherit' }}>About</Link></li>
+      </ul>
+    </nav>
+  );
+};
+
+const Footer = () => (
+  <footer style={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '40px',
+    fontSize: '12px',
+    textTransform: 'uppercase',
+    opacity: 0.5
+  }}>
+    <span>Based in NY</span>
+    <span>Est. 2026</span>
+    <span>(Beta)</span>
+    <a href="https://www.instagram.com/render_ai_ny/" target="_blank" rel="noopener noreferrer" style={{ opacity: 0.5, transition: 'opacity 0.2s' }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path>
+      </svg>
+    </a>
+  </footer>
+);
+
+const HomePage = () => {
+  const navigate = useNavigate();
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    navigate('/confirmation');
+  };
+
+  return (
+    <>
+      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
+          Architecture visualized / instantly. <br />
+          High fidelity renderings for Interior Designers, Architects, Builders, Real Estate Developers, Real Estate Agents, and Homeowners starting at <span style={{ color: '#FF4500' }}>$500</span>.
+        </h2>
+      </section>
+
+      <section id="services" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
+        
+        <ServiceRow price="500" title="Residential Exterior" tag="24H Turnaround" onClick={() => navigate('/residential-exterior')} />
+        <ServiceRow price="750" title="Residential Interior" tag="Living Spaces" onClick={() => navigate('/residential-interior')} />
+        <ServiceRow price="850" title="Residential Aerial" tag="Neighborhood View" onClick={() => navigate('/residential-aerial')} />
+        <ServiceRow price="850" title="Commercial Exterior" tag="Office/Retail" onClick={() => navigate('/commercial-exterior')} />
+        <ServiceRow price="950" title="Commercial Interior" tag="Office/Retail" onClick={() => navigate('/commercial-interior')} />
+        <ServiceRow price="950" title="Commercial Aerial" tag="Campus View" onClick={() => navigate('/commercial-aerial')} />
+      </section>
+
+      <section id="contact" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+        <h2 style={{ fontWeight: 900, fontSize: '32px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>PROJECT / INQUIRY</h2>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
+
+        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: '40px' }}>
+          <div style={{ position: 'relative' }}>
+            <input 
+              type="email" 
+              placeholder="Email Address" 
+              required
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #000000',
+                padding: '16px 0',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: '24px',
+                color: '#000000',
+                borderRadius: 0,
+                outline: 'none'
+              }}
+            />
+          </div>
+          <div style={{ position: 'relative' }}>
+            <input 
+              type="text" 
+              placeholder="Project Type" 
+              required
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #000000',
+                padding: '16px 0',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: '24px',
+                color: '#000000',
+                borderRadius: 0,
+                outline: 'none'
+              }}
+            />
+          </div>
+          <div style={{ position: 'relative' }}>
+            <input 
+              type="text" 
+              placeholder="Estimated Budget" 
+              required
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #000000',
+                padding: '16px 0',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: '24px',
+                color: '#000000',
+                borderRadius: 0,
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          <button 
+            type="submit"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              textAlign: 'left',
+              fontSize: '28px',
+              fontWeight: 400,
+              cursor: 'pointer',
+              padding: '20px 0',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              transition: 'color 0.2s',
+              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif"
+            }}
+          >
+            Submit Inquiry <span>→</span>
+          </button>
+        </form>
+      </section>
+    </>
+  );
+};
+
+const AboutPage = () => {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <div 
+        onClick={() => navigate('/')}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          marginBottom: '24px',
+          opacity: 0.6,
+          cursor: 'pointer'
+        }}
+      >
+        ← Back to Home
+      </div>
+      
+      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
+          Who We Are / <span style={{ color: '#FF4500' }}>About</span>
+        </h2>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '40px', border: 'none' }} />
+        
+        <div style={{ fontSize: '20px', lineHeight: 1.7, marginBottom: '60px' }}>
+          <p style={{ marginBottom: '32px' }}>
+            We are a multidisciplinary team of architects, interior designers, and technologists with extensive experience creating high-fidelity 3D visualizations for leading design firms, real estate developers, and cultural institutions worldwide.
+          </p>
+          <p style={{ marginBottom: '32px' }}>
+            After years working with major agencies, we recognized a gap: exceptional architectural visualization remained inaccessible to emerging designers, independent practices, and smaller studios who couldn't justify the traditional cost and turnaround time.
+          </p>
+          <p style={{ marginBottom: '32px' }}>
+            So we built a streamlined process—combining deep technical expertise with efficient workflows—to deliver photorealistic presentation imagery at a fraction of the industry standard. Our mission is to democratize access to world-class visualization, empowering a broader community of design enthusiasts to communicate their vision with clarity and impact.
+          </p>
+          <p style={{ opacity: 0.7 }}>
+            Whether you're pitching to clients, submitting for permits, or building your portfolio, we're here to make professional-grade rendering fast, affordable, and straightforward.
+          </p>
+        </div>
+
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '60px 0 40px 0', border: 'none' }} />
+        <h3 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '32px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Our Experience</h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em', color: '#FF4500' }}>Sectors</h4>
+            <ul style={{ listStyle: 'none', fontSize: '16px', lineHeight: 2 }}>
+              <li>• Residential Architecture</li>
+              <li>• Commercial Real Estate</li>
+              <li>• Interior Design Studios</li>
+              <li>• Urban Development</li>
+              <li>• Hospitality & Retail</li>
+            </ul>
+          </div>
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em', color: '#FF4500' }}>Capabilities</h4>
+            <ul style={{ listStyle: 'none', fontSize: '16px', lineHeight: 2 }}>
+              <li>• Photorealistic Rendering</li>
+              <li>• Material & Lighting Simulation</li>
+              <li>• Site Context Integration</li>
+              <li>• Entourage & Atmosphere</li>
+              <li>• Rapid Turnaround Workflow</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+};
+
+const portfolioItems = [
+  {
+    slug: "glass-pavilion",
+    title: "The Glass Pavilion",
+    tag: "Res-Exterior",
+    location: "Hudson Valley",
+    renderTime: "12H",
+    image: "https://images.unsplash.com/photo-1600607687920-4e2a09697d6b?auto=format&fit=crop&q=80&w=1200",
+    brief: "A transparent weekend retreat that dissolves into the tree line.",
+    scope: "Single-family residence with full landscape integration.",
+    deliverables: [
+      "Hero exterior render (4K)",
+      "Twilight mood variant",
+      "Landscape material palette study"
+    ],
+    tools: ["Rhino", "V-Ray", "Photoshop"],
+    timeline: [
+      { title: "Site + Massing", description: "Context modeling and preliminary massing studies." },
+      { title: "Material Studies", description: "Glass reflectivity tuning and stone detailing." },
+      { title: "Final Output", description: "Day + dusk finals with graded atmosphere." }
+    ]
+  },
+  {
+    slug: "concrete-loft-interior",
+    title: "Concrete Loft Interior",
+    tag: "Res-Interior",
+    location: "Berlin",
+    renderTime: "24H",
+    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=1200",
+    brief: "Soft light meets raw structure in a minimalist city loft.",
+    scope: "Open-plan living + kitchen with custom millwork.",
+    deliverables: [
+      "Primary interior perspective (4K)",
+      "Kitchen vignette detail",
+      "Material + lighting pass"
+    ],
+    tools: ["3ds Max", "Corona", "Photoshop"],
+    timeline: [
+      { title: "Layout Block-in", description: "Camera selection and spatial composition." },
+      { title: "Lighting + Mood", description: "Warm indirect lighting with soft shadows." },
+      { title: "Final Output", description: "Polished detail pass and export." }
+    ]
+  },
+  {
+    slug: "sunset-hills-development",
+    title: "Sunset Hills Development",
+    tag: "Res-Aerial",
+    location: "Portland",
+    renderTime: "36H",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200",
+    brief: "Aerial storytelling for a hillside residential community.",
+    scope: "Full site model with context and terrain.",
+    deliverables: [
+      "Aerial hero view (4K)",
+      "Context topology diagram",
+      "Massing + planting pass"
+    ],
+    tools: ["SketchUp", "V-Ray", "Photoshop"],
+    timeline: [
+      { title: "Site Modeling", description: "Terrain sculpting and base massing." },
+      { title: "Context Layering", description: "Trees, streets, and surrounding geometry." },
+      { title: "Final Output", description: "High altitude render with clear legibility." }
+    ]
+  },
+  {
+    slug: "axis-commercial-tower",
+    title: "Axis Commercial Tower",
+    tag: "Com-Exterior",
+    location: "Tokyo",
+    renderTime: "48H",
+    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200",
+    brief: "A high-contrast skyline statement for a mixed-use tower.",
+    scope: "Street-level hero with branding and urban context.",
+    deliverables: [
+      "Daytime hero render (4K)",
+      "Brand signage integration",
+      "People + traffic entourage"
+    ],
+    tools: ["Revit", "V-Ray", "Photoshop"],
+    timeline: [
+      { title: "Facade Study", description: "Glazing ratios and mullion refinement." },
+      { title: "Street Life", description: "Entourage pass for scale and activity." },
+      { title: "Final Output", description: "High-contrast daylight render." }
+    ]
+  },
+  {
+    slug: "flagship-retail-space",
+    title: "Flagship Retail Space",
+    tag: "Com-Interior",
+    location: "Paris",
+    renderTime: "60H",
+    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&q=80&w=1200",
+    brief: "A soft-brutalist retail experience with sculptural lighting.",
+    scope: "Customer journey renders for a luxury brand.",
+    deliverables: [
+      "Main retail floor render (4K)",
+      "Product display vignette",
+      "Lighting + material refinement"
+    ],
+    tools: ["Cinema4D", "Octane", "Photoshop"],
+    timeline: [
+      { title: "Concepting", description: "Spatial rhythm and focal points." },
+      { title: "Lighting Design", description: "IES-driven artificial lighting." },
+      { title: "Final Output", description: "High-end finishing and export." }
+    ]
+  },
+  {
+    slug: "tech-campus-masterplan",
+    title: "Tech Campus Masterplan",
+    tag: "Com-Aerial",
+    location: "Austin",
+    renderTime: "72H",
+    image: "https://images.unsplash.com/photo-1565008576549-57569a49371d?auto=format&fit=crop&q=80&w=1200",
+    brief: "Aerial masterplan with clear circulation and campus identity.",
+    scope: "Multi-building site planning and landscape integration.",
+    deliverables: [
+      "Aerial campus render (4K)",
+      "Site circulation overlay",
+      "Landscape + parking study"
+    ],
+    tools: ["Rhino", "Lumion", "Photoshop"],
+    timeline: [
+      { title: "Site Strategy", description: "Program distribution and access planning." },
+      { title: "Landscape Pass", description: "Green spaces and pedestrian flow." },
+      { title: "Final Output", description: "Clear aerial with campus branding." }
+    ]
+  }
+];
+
+const PortfolioPage = () => {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <div 
+        onClick={() => navigate('/')}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          marginBottom: '24px',
+          opacity: 0.6,
+          cursor: 'pointer'
+        }}
+      >
+        ← Back to Services
+      </div>
+      
+      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
+          Selected Works / <span style={{ color: '#FF4500' }}>Portfolio</span><br />
+          <span style={{ fontSize: '0.7em', opacity: 0.7 }}>Exploring the intersection of light, material, and geometric form.</span>
+        </h2>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '64px', border: 'none' }} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
+          {portfolioItems.map((item, index) => (
+            <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{
+                aspectRatio: '16/9',
+                backgroundColor: '#E0E0E0',
+                width: '100%',
+                position: 'relative',
+                overflow: 'hidden',
+                backgroundImage: `url('${item.image}')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'flex-end' }}>
+                <div>
+                  <div style={{ fontSize: '24px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                    {item.title}
+                  </div>
+                  <div style={{ display: 'flex', gap: '24px', fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, marginTop: '8px' }}>
+                    <span style={{ color: '#FF4500', fontWeight: 800 }}>{item.tag}</span>
+                    <span>Location: {item.location}</span>
+                    <span>Render Time: {item.renderTime}</span>
+                  </div>
+                </div>
+                <Link
+                  to={`/portfolio/${item.slug}`}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  <div style={{ fontSize: '16px', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6 }}>
+                    VIEW PROJECT <span>→</span>
+                  </div>
+                </Link>
+              </div>
+              <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', opacity: 0.1, margin: 0, border: 'none' }} />
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+};
+
+const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceName }) => {
+  const navigate = useNavigate();
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    navigate('/confirmation');
+  };
+
+  return (
+    <>
+      <div 
+        onClick={() => navigate('/')}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          marginBottom: '24px',
+          opacity: 0.6,
+          cursor: 'pointer'
+        }}
+      >
+        ← Back to Services
+      </div>
+      
+      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
+        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
+          {title} / <span style={{ color: '#FF4500' }}>${price}</span><br />
+          <span style={{ fontSize: '0.7em', opacity: 0.7 }}>{subtitle}</span>
+        </h2>
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '40px', marginBottom: '40px' }}>
+          <div>
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: 800, letterSpacing: '0.05em' }}>What's Included</h3>
+            <ul style={{ listStyle: 'none' }}>
+              {includes.map((item, index) => (
+                <li key={index} style={{ fontSize: '18px', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.1)', display: 'flex', alignItems: 'start' }}>
+                  <span style={{ color: '#FF4500', marginRight: '12px' }}>•</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          <div>
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: 800, letterSpacing: '0.05em' }}>The Process</h3>
+            {process.map((step, index) => (
+              <div key={index} style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+                <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>{step.title}</strong>
+                  <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
+        <h3 style={{ fontWeight: 900, fontSize: '24px', marginTop: '40px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
+          Book {title}
+        </h3>
+        
+        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: 0 }}>
+          <div style={{ position: 'relative' }}>
+            <input 
+              type="email" 
+              placeholder="Email Address" 
+              required
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #000000',
+                padding: '16px 0',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: '24px',
+                color: '#000000',
+                borderRadius: 0,
+                outline: 'none'
+              }}
+            />
+          </div>
+          <div style={{ position: 'relative' }}>
+            <input 
+              type="text" 
+              value={`${title} ($${price})`}
+              readOnly
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #000000',
+                padding: '16px 0',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: '24px',
+                color: '#000000',
+                borderRadius: 0,
+                outline: 'none',
+                opacity: 0.6
+              }}
+            />
+          </div>
+          <div style={{ position: 'relative' }}>
+            <input 
+              type="text" 
+              placeholder={serviceName === 'residential-exterior' ? 'Project Link / DropBox (Optional)' : 
+                           serviceName === 'residential-interior' ? 'Style Preference (e.g. Minimalist)' :
+                           serviceName === 'residential-aerial' ? 'Site Location / Address' :
+                           serviceName === 'commercial-exterior' ? 'Development Name / Brand' :
+                           serviceName === 'commercial-interior' ? 'Square Footage' :
+                           'Campus / Site Address'}
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '2px solid #000000',
+                padding: '16px 0',
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                fontSize: '24px',
+                color: '#000000',
+                borderRadius: 0,
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '20px 0', border: 'none' }} />
+          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
+            Project Files
+          </h3>
+          
+          <FileUpload id={`files-${serviceName}`} fileListId={`file-list-${serviceName}`} />
+
+          <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '20px 0', border: 'none' }} />
+          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
+            Payment Method
+          </h3>
+          
+          <PaymentOptions name={`payment-${serviceName}`} />
+
+          <div style={{ marginTop: '40px', padding: '24px', border: '2px solid #000000' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <span style={{ fontWeight: 500 }}>{title} (4K)</span>
+              <span>${price}</span>
+            </div>
+            <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', opacity: 0.2, margin: '16px 0', border: 'none' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 600 }}>
+              <span>Total</span>
+              <span style={{ color: '#FF4500' }}>${price}</span>
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            style={{
+              background: 'transparent',
+              border: '2px solid #000000',
+              textAlign: 'center',
+              fontSize: '28px',
+              fontWeight: 400,
+              cursor: 'pointer',
+              padding: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              transition: 'color 0.2s',
+              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+              marginTop: '32px',
+              width: '100%'
+            }}
+          >
+            Proceed to Payment <span>→</span>
+          </button>
+        </form>
+      </section>
+    </>
+  );
+};
+
+const PortfolioDetailPage = () => {
+  const navigate = useNavigate();
+  const { slug } = useParams();
+  const item = portfolioItems.find((entry) => entry.slug === slug);
+
+  if (!item) {
+    return (
+      <>
+        <div
+          onClick={() => navigate('/portfolio')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '14px',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            marginBottom: '24px',
+            opacity: 0.6,
+            cursor: 'pointer'
+          }}
+        >
+          ← Back to Portfolio
+        </div>
+        <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+          <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '20px' }}>
+            Project Not Found
+          </h2>
+          <p style={{ fontSize: '18px', opacity: 0.7 }}>
+            The project you're looking for doesn’t exist. Return to the portfolio to browse available work.
+          </p>
+        </section>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div
+        onClick={() => navigate('/portfolio')}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          marginBottom: '24px',
+          opacity: 0.6,
+          cursor: 'pointer'
+        }}
+      >
+        ← Back to Portfolio
+      </div>
+
+      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+        <div style={{
+          aspectRatio: '16/9',
+          backgroundColor: '#E0E0E0',
+          width: '100%',
+          position: 'relative',
+          overflow: 'hidden',
+          backgroundImage: `url('${item.image}')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}></div>
+
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '16px' }}>
+            {item.title}
+          </h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '12px', textTransform: 'uppercase', opacity: 0.7 }}>
+            <span style={{ color: '#FF4500', fontWeight: 800 }}>{item.tag}</span>
+            <span>Location: {item.location}</span>
+            <span>Render Time: {item.renderTime}</span>
+          </div>
+          <p style={{ fontSize: '20px', lineHeight: 1.7, marginTop: '24px', maxWidth: '900px' }}>
+            {item.brief}
+          </p>
+        </div>
+
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px 0', border: 'none' }} />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+          <div>
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>Project Scope</h3>
+            <p style={{ fontSize: '18px', lineHeight: 1.6, opacity: 0.8 }}>{item.scope}</p>
+
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginTop: '32px', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>Deliverables</h3>
+            <ul style={{ listStyle: 'none', fontSize: '16px', lineHeight: 2 }}>
+              {item.deliverables.map((deliverable, index) => (
+                <li key={index}>
+                  <span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>
+                  {deliverable}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>Pipeline</h3>
+            {item.timeline.map((step, index) => (
+              <div key={index} style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>{step.title}</strong>
+                  <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>{step.description}</p>
+                </div>
+              </div>
+            ))}
+
+            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginTop: '32px', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>Tools</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+              {item.tools.map((tool) => (
+                <span key={tool} style={{ padding: '8px 12px', border: '1px solid #000000', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {tool}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px 0', border: 'none' }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px' }}>
+          <div>
+            <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+              Interested in a similar project?
+            </h3>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>
+              Tell us about your project and we’ll recommend the right rendering package.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/#contact')}
+            style={{
+              background: 'transparent',
+              border: '2px solid #000000',
+              textAlign: 'center',
+              fontSize: '18px',
+              fontWeight: 400,
+              cursor: 'pointer',
+              padding: '16px 24px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              transition: 'color 0.2s',
+              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Start a Project <span>→</span>
+          </button>
+        </div>
+      </section>
+    </>
+  );
+};
+
+const ConfirmationPage = () => {
+  const navigate = useNavigate();
+
+  return (
+    <section style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeIn 0.5s ease-out' }}>
+      <div style={{ fontSize: '64px', marginBottom: '32px' }}>✓</div>
+      <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '20px' }}>
+        Order Confirmed
+      </h2>
+      <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px auto', maxWidth: '400px', border: 'none' }} />
+      <p style={{ fontSize: '20px', lineHeight: 1.6, opacity: 0.8, marginBottom: '40px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
+        Thank you for your order. We've received your project details and will begin work immediately.
+      </p>
+      
+      <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '40px', margin: '40px 0', textAlign: 'left' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '24px', letterSpacing: '0.05em' }}>
+          What Happens Next
+        </h3>
+        
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>01</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Confirmation Email</strong>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>You'll receive an order confirmation with project details within 5 minutes.</p>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>02</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Project Kickoff</strong>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>Our team will review your files and reach out if we need any clarifications.</p>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>03</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Progress Updates</strong>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>We'll email you with progress updates and draft previews throughout the process.</p>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>04</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Final Delivery</strong>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>High-resolution files will be delivered via email within the turnaround time.</p>
+          </div>
+        </div>
+      </div>
+
+      <p style={{ fontSize: '16px', opacity: 0.6, marginBottom: '40px' }}>
+        Questions? Email us at <span style={{ color: '#FF4500', fontWeight: 600 }}>hello@render-ai.com</span>
+      </p>
+
+      <button 
+        onClick={() => navigate('/')}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          textAlign: 'center',
+          fontSize: '18px',
+          fontWeight: 400,
+          cursor: 'pointer',
+          padding: '20px 0',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '10px',
+          transition: 'color 0.2s',
+          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+          margin: '0 auto'
+        }}
+      >
+        <span>←</span> Back to Services
+      </button>
+    </section>
+  );
+};
+
+const App = () => {
+  useEffect(() => {
+    const linkElement = document.createElement('link');
+    linkElement.rel = 'preconnect';
+    linkElement.href = 'https://fonts.googleapis.com';
+    document.head.appendChild(linkElement);
+
+    const linkElement2 = document.createElement('link');
+    linkElement2.rel = 'preconnect';
+    linkElement2.href = 'https://fonts.gstatic.com';
+    linkElement2.crossOrigin = 'anonymous';
+    document.head.appendChild(linkElement2);
+
+    const linkElement3 = document.createElement('link');
+    linkElement3.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800&display=swap';
+    linkElement3.rel = 'stylesheet';
+    document.head.appendChild(linkElement3);
+
+    const style = document.createElement('style');
+    style.textContent = `
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @media (max-width: 600px) {
+        nav {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 20px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(linkElement);
+      document.head.removeChild(linkElement2);
+      document.head.removeChild(linkElement3);
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  return (
+    <Router basename="/">
+      <div style={customStyles.root}>
+        <div style={customStyles.container}>
+          <Header />
+          
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/portfolio/:slug" element={<PortfolioDetailPage />} />
+            <Route path="/residential-exterior" element={
+              <ServiceDetailPage 
+                price="500"
+                title="Residential Exterior"
+                subtitle="Photorealistic visualization for single-family homes to showcase architectural intent and curb appeal."
+                serviceName="residential-exterior"
+                includes={[
+                  "1 High-Res Rendering (4k)",
+                  "Environment Integration (Day/Dusk)",
+                  "Landscape & Vegetation",
+                  "Standard Material Library",
+                  "2 Rounds of Revisions",
+                  "24-Hour Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                  { title: "Material Setup", description: "We apply textures based on your moodboard or specs." },
+                  { title: "Lighting Draft", description: "Review low-res lighting pass for approval." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/residential-interior" element={
+              <ServiceDetailPage 
+                price="750"
+                title="Residential Interior"
+                subtitle="Detailed interior staging focused on living spaces, furniture curation, and atmospheric lighting."
+                serviceName="residential-interior"
+                includes={[
+                  "1 High-Res Rendering (4k)",
+                  "Custom Furniture Selection",
+                  "Complex Lighting Setup",
+                  "Soft Goods & Decor Details",
+                  "3 Rounds of Revisions",
+                  "48-Hour Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                  { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
+                  { title: "Draft Review", description: "Check angles, textures, and lighting balance." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/residential-aerial" element={
+              <ServiceDetailPage 
+                price="850"
+                title="Residential Aerial"
+                subtitle="Drone-view perspective to establish neighborhood context, landscaping, and property boundaries."
+                serviceName="residential-aerial"
+                includes={[
+                  "1 Wide-Angle Aerial View",
+                  "Full Site Modeling",
+                  "Surrounding Context (Ghosted or Detailed)",
+                  "Vegetation & Topography",
+                  "3 Rounds of Revisions",
+                  "3-Day Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
+                  { title: "Massing", description: "We establish the scale of the building vs the environment." },
+                  { title: "Environment", description: "Adding trees, roads, cars, and neighboring structures." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/commercial-exterior" element={
+              <ServiceDetailPage 
+                price="850"
+                title="Commercial Exterior"
+                subtitle="Striking visuals for retail, office, and mixed-use developments focused on scale and branding."
+                serviceName="commercial-exterior"
+                includes={[
+                  "1 Hero Shot (Street Level)",
+                  "Commercial Entourage (People/Cars)",
+                  "Signage & Branding Integration",
+                  "Glass & Facade Detailing",
+                  "3 Rounds of Revisions",
+                  "3-4 Day Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                  { title: "Brand Integration", description: "Placement of logos, signage, and brand colors." },
+                  { title: "Life & Activity", description: "Populating the scene with shoppers, workers, and activity." }
+                ]}
+              />
+            } />
+            <Route path="/commercial-interior" element={
+              <ServiceDetailPage 
+                price="950"
+                title="Commercial Interior"
+                subtitle="Office, retail, and hospitality interiors that communicate flow, capacity, and atmosphere."
+                serviceName="commercial-interior"
+                includes={[
+                  "1 Perspective View",
+                  "Office/Retail Furniture Systems",
+                  "Advanced Lighting (Artificial)",
+                  "Entourage (People working/shopping)",
+                  "4 Rounds of Revisions",
+                  "5 Day Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                  { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
+                  { title: "Lighting Design", description: "IES profiles for accurate artificial lighting simulation." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/commercial-aerial" element={
+              <ServiceDetailPage 
+                price="950"
+                title="Commercial Aerial"
+                subtitle="Bird's eye perspective for office parks, retail centers, and mixed-use developments showcasing site planning and scale."
+                serviceName="commercial-aerial"
+                includes={[
+                  "1 Wide-Angle Campus View",
+                  "Multi-Building Site Modeling",
+                  "Parking & Infrastructure",
+                  "Signage & Branding",
+                  "4 Rounds of Revisions",
+                  "5-Day Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
+                  { title: "Site Layout", description: "We model the campus, parking lots, and access roads." },
+                  { title: "Context Building", description: "Adding surrounding buildings, vehicles, and landscaping." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/confirmation" element={<ConfirmationPage />} />
+          </Routes>
+          
+          <Footer />
+        </div>
+      </div>
+    </Router>
+  );
+};
+
+export default App;

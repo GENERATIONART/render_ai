@@ -31,6 +31,8 @@ Minimum required:
 
 Run the SQL in `supabase/migrations/001_init.sql`.
 If you already ran the initial migration earlier, also run `supabase/migrations/002_add_customer_fields.sql`.
+For the admin site + content management, also run `supabase/migrations/003_admin_content.sql`.
+If you previously enabled Supabase-Auth-based admin policies, run `supabase/migrations/004_remove_supabase_auth_admin.sql`.
 
 4) Enable Stripe Tax
 
@@ -65,3 +67,19 @@ Configure:
 - `OWNER_EMAIL` (destination)
 - `RESEND_API_KEY`
 - `RESEND_FROM` (must be a verified sender/domain in Resend)
+
+## Admin site
+
+Visit:
+- `/admin`
+
+Content is stored in Supabase tables:
+- `portfolio_items` (gallery + portfolio)
+- `site_copy` (homepage copy)
+
+Access is restricted by the API server (no Supabase Auth):
+- Set `ADMIN_EMAIL=brendan@brendantadler.com`
+- Set `ADMIN_PASSWORD` to a strong password
+- Set `ADMIN_SESSION_SECRET` to a long random string
+
+Then sign in at `/admin`.

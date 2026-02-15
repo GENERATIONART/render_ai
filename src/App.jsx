@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useParams, useLocation } from 'react-router-dom';
 import portfolioData from './portfolioData.js';
 import { getSupabaseBrowser } from './lib/supabaseBrowser.js';
+import { AdminPage } from './admin/AdminPage.jsx';
 
 const customStyles = {
   container: {
@@ -457,7 +458,7 @@ const HomeGallery = ({ items }) => {
   );
 };
 
-const HomePage = ({ portfolioItems }) => {
+const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline }) => {
   const navigate = useNavigate();
 
   const handleFormSubmit = (e) => {
@@ -465,13 +466,18 @@ const HomePage = ({ portfolioItems }) => {
     navigate('/inquiry-confirmation');
   };
 
+  const headlineText = heroHeadline || 'Architecture visualized / instantly.';
+  const subheadlineText =
+    heroSubheadline ||
+    'High fidelity renderings for Interior Designers, Architects, Builders, Real Estate Developers, Real Estate Agents, and Homeowners starting at';
+
   return (
     <>
       <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
         <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
         <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
-          Architecture visualized / instantly. <br />
-          High fidelity renderings for Interior Designers, Architects, Builders, Real Estate Developers, Real Estate Agents, and Homeowners starting at <span style={{ color: '#FF4500' }}>$500</span>.
+          {headlineText} <br />
+          {subheadlineText} <span style={{ color: '#FF4500' }}>$500</span>.
         </h2>
       </section>
 
@@ -1505,6 +1511,7 @@ const ScrollToHash = () => {
 
 const App = () => {
   const [portfolioItems, setPortfolioItems] = useState(portfolioData);
+  const [siteCopy, setSiteCopy] = useState({});
 
   useEffect(() => {
     const linkElement = document.createElement('link');
@@ -1652,6 +1659,35 @@ const App = () => {
   useEffect(() => {
     const loadPortfolio = async () => {
       try {
+        try {
+          const supabase = getSupabaseBrowser();
+          const { data, error } = await supabase
+            .from('portfolio_items')
+            .select('slug,title,tag,location,render_time,image_url,brief,scope,deliverables,tools,timeline')
+            .eq('published', true)
+            .order('sort_order', { ascending: true })
+            .order('created_at', { ascending: false });
+          if (!error && Array.isArray(data) && data.length > 0) {
+            const mapped = data.map((row) => ({
+              slug: row.slug,
+              title: row.title,
+              tag: row.tag,
+              location: row.location,
+              renderTime: row.render_time,
+              image: row.image_url,
+              brief: row.brief,
+              scope: row.scope,
+              deliverables: Array.isArray(row.deliverables) ? row.deliverables : [],
+              tools: Array.isArray(row.tools) ? row.tools : [],
+              timeline: Array.isArray(row.timeline) ? row.timeline : []
+            }));
+            setPortfolioItems(mapped);
+            return;
+          }
+        } catch (error) {
+          // ignore and fall back to static data
+        }
+
         const response = await fetch('/portfolio.json', { cache: 'no-store' });
         if (!response.ok) {
           return;
@@ -1668,6 +1704,29 @@ const App = () => {
     loadPortfolio();
   }, []);
 
+  useEffect(() => {
+    const loadCopy = async () => {
+      try {
+        const supabase = getSupabaseBrowser();
+        const { data, error } = await supabase
+          .from('site_copy')
+          .select('key,value')
+          .in('key', ['home.hero_headline', 'home.hero_subheadline']);
+        if (error) {
+          return;
+        }
+        const map = {};
+        for (const row of data || []) {
+          map[row.key] = row.value;
+        }
+        setSiteCopy(map);
+      } catch (error) {
+        // ignore
+      }
+    };
+    loadCopy();
+  }, []);
+
 	  return (
 	    <Router basename="/">
 	      <ScrollToHash />
@@ -1676,7 +1735,17 @@ const App = () => {
 	          <Header />
 	          
 	          <Routes>
-	            <Route path="/" element={<HomePage portfolioItems={portfolioItems} />} />
+	            <Route
+                path="/"
+                element={
+                  <HomePage
+                    portfolioItems={portfolioItems}
+                    heroHeadline={siteCopy['home.hero_headline']}
+                    heroSubheadline={siteCopy['home.hero_subheadline']}
+                  />
+                }
+              />
+              <Route path="/admin" element={<AdminPage />} />
 	            <Route path="/about" element={<AboutPage />} />
 	            <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
 	            <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />

@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import Stripe from 'stripe';
-import { SERVICE_CATALOG } from '../server/lib/catalog.js';
+import { SERVICE_CATALOG } from './lib/catalog.js';
 import {
   createProject,
   createSignedUpload,
@@ -11,9 +11,9 @@ import {
   markStripeEventProcessed,
   recordProjectFiles,
   setStripeSession
-} from '../server/lib/supabaseStore.js';
-import { getSupabaseAdmin } from '../server/lib/supabaseAdmin.js';
-import { renderOwnerEmailHtml, renderOwnerEmailText, sendOwnerEmail } from '../server/lib/email.js';
+} from './lib/supabaseStore.js';
+import { getSupabaseAdmin } from './lib/supabaseAdmin.js';
+import { renderOwnerEmailHtml, renderOwnerEmailText, sendOwnerEmail } from './lib/email.js';
 
 const json = (res, status, body) => {
   res.statusCode = status;
@@ -128,15 +128,9 @@ const requireAdmin = (req) => {
 const APP_URL = process.env.APP_URL || '';
 const STRIPE_TAX_CODE = process.env.STRIPE_TAX_CODE || '';
 
-const normalizePathname = (pathname) => {
-  if (!pathname) return '/api';
-  if (pathname.startsWith('/api')) return pathname;
-  return `/api${pathname.startsWith('/') ? '' : '/'}${pathname}`;
-};
-
 export default async function handler(req, res) {
   const url = new URL(req.url, 'http://localhost');
-  const pathname = normalizePathname(url.pathname);
+  const pathname = url.pathname;
   const parts = pathname.split('/').filter(Boolean); // e.g. ['api','projects',...]
 
   if (req.method === 'OPTIONS') {

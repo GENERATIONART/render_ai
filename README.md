@@ -95,7 +95,7 @@ Then sign in at `/admin`.
 
 ## Deploy to Vercel (frontend + API)
 
-This repo includes Vercel Serverless Functions under `api/[...path].js`, so `/api/*` works on your Vercel domain (no separate server to deploy).
+This repo includes a single Vercel Serverless Function at `api/[...path].js` (Hobby-plan friendly), so `/api/*` works on your Vercel domain (no separate server to deploy).
 
 In Vercel Project Settings → Environment Variables, set (Functions/runtime):
 - `SUPABASE_URL`

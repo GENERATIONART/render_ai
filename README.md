@@ -34,6 +34,7 @@ Preferred (Prisma):
 - Set `DATABASE_URL` to your Supabase Postgres connection string (Project Settings → Database → Connection string).
 - Run `npm run prisma:migrate:deploy` to apply `prisma/migrations/*`.
 - This creates the default upload bucket `project-files`; if you changed `SUPABASE_STORAGE_BUCKET`, create a bucket with that id in Supabase Storage too.
+- This also creates `site_copy` + `portfolio_items` (used by `/admin`) and the public `site-media` bucket.
 
 If you already created tables manually in Supabase, either:
 - start from a fresh Supabase project, or

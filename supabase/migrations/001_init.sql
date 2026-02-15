@@ -1,0 +1,49 @@
+-- Core tables for projects + uploads + Stripe status
+-- Apply in Supabase SQL editor or migrations pipeline.
+
+create extension if not exists pgcrypto;
+
+create table if not exists public.projects (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  status text not null default 'created',
+  email text not null,
+  customer_name text,
+  business_name text,
+  service_name text not null,
+  project_info text,
+  amount_cents integer,
+  currency text not null default 'usd',
+  checkout_session_id text,
+  payment_status text not null default 'unpaid'
+);
+
+create index if not exists projects_created_at_idx on public.projects (created_at desc);
+create index if not exists projects_email_idx on public.projects (email);
+
+create table if not exists public.project_files (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  project_id uuid not null references public.projects(id) on delete cascade,
+  bucket text not null,
+  path text not null,
+  original_name text not null,
+  content_type text,
+  size_bytes bigint
+);
+
+create index if not exists project_files_project_id_idx on public.project_files (project_id);
+
+create table if not exists public.stripe_webhook_events (
+  id text primary key,
+  created_at timestamptz not null default now()
+);
+
+-- Business-grade defaults: lock tables behind service role by default.
+alter table public.projects enable row level security;
+alter table public.project_files enable row level security;
+alter table public.stripe_webhook_events enable row level security;
+
+-- No RLS policies are created here intentionally.
+-- Use service-role access from the backend, or add auth-based policies later.

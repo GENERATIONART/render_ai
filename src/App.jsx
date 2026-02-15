@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useParams, useLocation } from 'react-router-dom';
 import portfolioData from './portfolioData.js';
+import { getSupabaseBrowser } from './lib/supabaseBrowser.js';
 
 const customStyles = {
   container: {
@@ -65,16 +66,23 @@ const ServiceRow = ({ price, title, tag, onClick }) => {
   );
 };
 
-const FileUpload = ({ id, fileListId }) => {
+const FileUpload = ({ id, fileListId, onFilesChange }) => {
   const [files, setFiles] = useState([]);
+
+  const setFilesAndNotify = (nextFiles) => {
+    setFiles(nextFiles);
+    if (typeof onFilesChange === 'function') {
+      onFilesChange(nextFiles);
+    }
+  };
 
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files);
-    setFiles([...files, ...newFiles]);
+    setFilesAndNotify([...files, ...newFiles]);
   };
 
   const removeFile = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
+    setFilesAndNotify(files.filter((_, i) => i !== index));
   };
 
   return (
@@ -132,188 +140,6 @@ const FileUpload = ({ id, fileListId }) => {
         </ul>
       </div>
     </div>
-  );
-};
-
-const PaymentOptions = ({ name }) => {
-  const [selectedPayment, setSelectedPayment] = useState('apple-pay');
-
-  return (
-    <>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <label style={{ cursor: 'pointer', display: 'block' }}>
-          <input 
-            type="radio" 
-            name={name}
-            value="apple-pay" 
-            checked={selectedPayment === 'apple-pay'}
-            onChange={() => setSelectedPayment('apple-pay')}
-            style={{ display: 'none' }}
-          />
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '20px',
-            border: '2px solid #000000',
-            transition: 'all 0.2s',
-            fontSize: '18px',
-            fontWeight: 500,
-            backgroundColor: selectedPayment === 'apple-pay' ? '#000000' : 'transparent',
-            color: selectedPayment === 'apple-pay' ? '#F4F4F4' : '#000000'
-          }}>
-            <span>Apple Pay</span>
-          </div>
-        </label>
-        
-        <label style={{ cursor: 'pointer', display: 'block' }}>
-          <input 
-            type="radio" 
-            name={name}
-            value="credit-card"
-            checked={selectedPayment === 'credit-card'}
-            onChange={() => setSelectedPayment('credit-card')}
-            style={{ display: 'none' }}
-          />
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '20px',
-            border: '2px solid #000000',
-            transition: 'all 0.2s',
-            fontSize: '18px',
-            fontWeight: 500,
-            backgroundColor: selectedPayment === 'credit-card' ? '#000000' : 'transparent',
-            color: selectedPayment === 'credit-card' ? '#F4F4F4' : '#000000'
-          }}>
-            <span>Credit Card</span>
-          </div>
-        </label>
-        
-        {selectedPayment === 'credit-card' && (
-          <div style={{ marginTop: '24px', padding: '24px', border: '2px solid #000000', animation: 'fadeIn 0.3s ease-out' }}>
-            <input 
-              type="text" 
-              placeholder="Card Number" 
-              maxLength="19"
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #000000',
-                padding: '12px 0',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                fontSize: '16px',
-                color: '#000000',
-                marginBottom: '20px',
-                outline: 'none'
-              }}
-            />
-            <input 
-              type="text" 
-              placeholder="Cardholder Name"
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #000000',
-                padding: '12px 0',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                fontSize: '16px',
-                color: '#000000',
-                marginBottom: '20px',
-                outline: 'none'
-              }}
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <input 
-                type="text" 
-                placeholder="MM/YY" 
-                maxLength="5"
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: '2px solid #000000',
-                  padding: '12px 0',
-                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                  fontSize: '16px',
-                  color: '#000000',
-                  outline: 'none'
-                }}
-              />
-              <input 
-                type="text" 
-                placeholder="CVV" 
-                maxLength="3"
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: '2px solid #000000',
-                  padding: '12px 0',
-                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                  fontSize: '16px',
-                  color: '#000000',
-                  outline: 'none'
-                }}
-              />
-            </div>
-          </div>
-        )}
-        
-        <label style={{ cursor: 'pointer', display: 'block' }}>
-          <input 
-            type="radio" 
-            name={name}
-            value="wire-transfer"
-            checked={selectedPayment === 'wire-transfer'}
-            onChange={() => setSelectedPayment('wire-transfer')}
-            style={{ display: 'none' }}
-          />
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '20px',
-            border: '2px solid #000000',
-            transition: 'all 0.2s',
-            fontSize: '18px',
-            fontWeight: 500,
-            backgroundColor: selectedPayment === 'wire-transfer' ? '#000000' : 'transparent',
-            color: selectedPayment === 'wire-transfer' ? '#F4F4F4' : '#000000'
-          }}>
-            <span>Wire Transfer</span>
-          </div>
-        </label>
-        {selectedPayment === 'wire-transfer' && (
-          <details style={{ marginTop: '16px', padding: '20px', border: '2px solid #000000' }}>
-            <summary style={{ cursor: 'pointer', fontSize: '16px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Wire Details
-            </summary>
-            <div style={{ marginTop: '16px', fontSize: '16px', lineHeight: 1.6, opacity: 0.9 }}>
-              <p style={{ marginBottom: '12px' }}>Use the details below to send a wire. Include your project name in the memo.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px' }}>
-                <span style={{ fontWeight: 600 }}>Bank Name</span>
-                <span>YOUR BANK NAME</span>
-                <span style={{ fontWeight: 600 }}>Account Name</span>
-                <span>RENDER AI LLC</span>
-                <span style={{ fontWeight: 600 }}>Routing</span>
-                <span>XXXXXX</span>
-                <span style={{ fontWeight: 600 }}>Account</span>
-                <span>XXXXXX</span>
-                <span style={{ fontWeight: 600 }}>SWIFT</span>
-                <span>XXXXXX</span>
-              </div>
-              <p style={{ marginTop: '16px', fontSize: '14px', opacity: 0.7 }}>
-                Need a secure portal link? Reply to the confirmation email and we’ll send it.
-              </p>
-            </div>
-          </details>
-        )}
-      </div>
-    </>
   );
 };
 
@@ -381,7 +207,257 @@ const Footer = () => (
   </footer>
 );
 
-const HomePage = () => {
+const HomeGallery = ({ items }) => {
+  const slides = (Array.isArray(items) && items.length > 0 ? items : portfolioData).slice(0, 8);
+  const containerRef = React.useRef(null);
+  const slideRefs = React.useRef([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const scrollToIndex = (nextIndex) => {
+    const node = slideRefs.current[nextIndex];
+    if (!node) {
+      return;
+    }
+    const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    node.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', inline: 'start', block: 'nearest' });
+  };
+
+  useEffect(() => {
+    if (slides.length <= 1 || paused) {
+      return;
+    }
+    const id = window.setInterval(() => {
+      setActiveIndex((prev) => {
+        const next = (prev + 1) % slides.length;
+        scrollToIndex(next);
+        return next;
+      });
+    }, 6500);
+    return () => window.clearInterval(id);
+  }, [paused, slides.length]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) {
+      return;
+    }
+    let raf = 0;
+    const onScroll = () => {
+      window.cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(() => {
+        const left = el.scrollLeft;
+        let bestIndex = 0;
+        let bestDistance = Infinity;
+        for (let i = 0; i < slideRefs.current.length; i += 1) {
+          const node = slideRefs.current[i];
+          if (!node) continue;
+          const d = Math.abs(node.offsetLeft - left);
+          if (d < bestDistance) {
+            bestDistance = d;
+            bestIndex = i;
+          }
+        }
+        setActiveIndex(bestIndex);
+      });
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(raf);
+      el.removeEventListener('scroll', onScroll);
+    };
+  }, [slides.length]);
+
+  if (slides.length === 0) {
+    return null;
+  }
+
+  return (
+    <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+        <div>
+          <h3 style={{ fontWeight: 900, fontSize: '24px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
+            Selected Work
+          </h3>
+          <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4, maxWidth: '640px' }}>
+            A quick look at the range: residential, commercial, interiors, aerials.
+          </p>
+        </div>
+        <Link to="/portfolio" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', opacity: 0.7, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            View Portfolio <span>→</span>
+          </div>
+        </Link>
+      </div>
+
+      <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '24px 0', border: 'none' }} />
+
+      <div
+        style={{ position: 'relative' }}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocusCapture={() => setPaused(true)}
+        onBlurCapture={() => setPaused(false)}
+      >
+        <div
+          ref={containerRef}
+          style={{
+            display: 'flex',
+            gap: '18px',
+            overflowX: 'auto',
+            scrollSnapType: 'x mandatory',
+            paddingBottom: '6px',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          {slides.map((item, i) => (
+            <Link
+              key={item.slug || i}
+              to={item.slug ? `/portfolio/${item.slug}` : '/portfolio'}
+              aria-label={item.title ? `Open ${item.title}` : 'Open portfolio item'}
+              style={{
+                textDecoration: 'none',
+                color: 'inherit',
+                flex: '0 0 clamp(280px, 78vw, 860px)',
+                scrollSnapAlign: 'start'
+              }}
+            >
+              <div
+                ref={(node) => {
+                  slideRefs.current[i] = node;
+                }}
+                data-slide
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  aspectRatio: '16/9',
+                  backgroundColor: '#E0E0E0',
+                  overflow: 'hidden',
+                  border: '2px solid #000000'
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundImage: `url('${item.image}')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    transform: activeIndex === i ? 'scale(1.02)' : 'scale(1)',
+                    transition: 'transform 700ms ease'
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background:
+                      'linear-gradient(180deg, rgba(0,0,0,0.00) 35%, rgba(0,0,0,0.75) 100%)'
+                  }}
+                />
+                <div style={{ position: 'absolute', left: 16, right: 16, bottom: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.85)' }}>
+                        {item.tag || 'Project'}
+                      </div>
+                      <div style={{ fontSize: '20px', fontWeight: 600, letterSpacing: '-0.02em', color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.title || 'Untitled'}
+                      </div>
+                    </div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '12px', color: 'rgba(255,255,255,0.85)' }}>
+                      {String(i + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          aria-label="Previous image"
+          onClick={() => {
+            const next = (activeIndex - 1 + slides.length) % slides.length;
+            setActiveIndex(next);
+            scrollToIndex(next);
+          }}
+          style={{
+            position: 'absolute',
+            left: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            border: '2px solid #000000',
+            background: 'rgba(244,244,244,0.92)',
+            color: '#000000',
+            width: 44,
+            height: 44,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 18
+          }}
+        >
+          ←
+        </button>
+        <button
+          type="button"
+          aria-label="Next image"
+          onClick={() => {
+            const next = (activeIndex + 1) % slides.length;
+            setActiveIndex(next);
+            scrollToIndex(next);
+          }}
+          style={{
+            position: 'absolute',
+            right: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            border: '2px solid #000000',
+            background: 'rgba(244,244,244,0.92)',
+            color: '#000000',
+            width: 44,
+            height: 44,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 18
+          }}
+        >
+          →
+        </button>
+
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '16px' }}>
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={() => {
+                setActiveIndex(i);
+                scrollToIndex(i);
+              }}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 999,
+                border: '2px solid #000000',
+                background: i === activeIndex ? '#000000' : 'transparent',
+                cursor: 'pointer',
+                padding: 0
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const HomePage = ({ portfolioItems }) => {
   const navigate = useNavigate();
 
   const handleFormSubmit = (e) => {
@@ -399,6 +475,8 @@ const HomePage = () => {
         </h2>
       </section>
 
+      <HomeGallery items={portfolioItems} />
+
       <section id="services" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
         <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
         
@@ -414,31 +492,68 @@ const HomePage = () => {
         <h2 style={{ fontWeight: 900, fontSize: '32px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>PROJECT / INQUIRY</h2>
         <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
 
-        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: '40px' }}>
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="email" 
-              placeholder="Email Address" 
-              required
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #000000',
-                padding: '16px 0',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                fontSize: '24px',
-                color: '#000000',
-                borderRadius: 0,
-                outline: 'none'
-              }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="text" 
-              placeholder="Project Type" 
-              required
+	        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: '40px' }}>
+	          <div style={{ position: 'relative' }}>
+	            <input 
+	              type="email" 
+	              placeholder="Email Address" 
+	              required
+	              style={{
+	                width: '100%',
+	                background: 'transparent',
+	                border: 'none',
+	                borderBottom: '2px solid #000000',
+	                padding: '16px 0',
+	                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+	                fontSize: '24px',
+	                color: '#000000',
+	                borderRadius: 0,
+	                outline: 'none'
+	              }}
+	            />
+	          </div>
+	          <div style={{ position: 'relative' }}>
+	            <input 
+	              type="text" 
+	              placeholder="Full Name"
+	              required
+	              style={{
+	                width: '100%',
+	                background: 'transparent',
+	                border: 'none',
+	                borderBottom: '2px solid #000000',
+	                padding: '16px 0',
+	                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+	                fontSize: '24px',
+	                color: '#000000',
+	                borderRadius: 0,
+	                outline: 'none'
+	              }}
+	            />
+	          </div>
+	          <div style={{ position: 'relative' }}>
+	            <input 
+	              type="text" 
+	              placeholder="Business Name (Optional)"
+	              style={{
+	                width: '100%',
+	                background: 'transparent',
+	                border: 'none',
+	                borderBottom: '2px solid #000000',
+	                padding: '16px 0',
+	                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+	                fontSize: '24px',
+	                color: '#000000',
+	                borderRadius: 0,
+	                outline: 'none'
+	              }}
+	            />
+	          </div>
+	          <div style={{ position: 'relative' }}>
+	            <input 
+	              type="text" 
+	              placeholder="Project Type" 
+	              required
               style={{
                 width: '100%',
                 background: 'transparent',
@@ -644,12 +759,117 @@ const PortfolioPage = ({ items }) => {
   );
 };
 
-const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceName }) => {
+const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceName, stripeCheckoutUrl }) => {
   const navigate = useNavigate();
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [projectInfo, setProjectInfo] = useState('');
+  const [projectFiles, setProjectFiles] = useState([]);
 
-  const handleFormSubmit = (e) => {
+  const proceedLabel = 'Checkout';
+  const buttonLabel = isSubmitting ? 'Submitting…' : proceedLabel;
+
+  const readApiError = async (res) => {
+    try {
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        return data?.error ? String(data.error) : JSON.stringify(data);
+      }
+      const text = await res.text();
+      return text ? String(text).slice(0, 300) : '';
+    } catch (error) {
+      return '';
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    navigate('/confirmation');
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const supabase = getSupabaseBrowser();
+
+      const projectRes = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, fullName, businessName, serviceName, projectInfo })
+      });
+      if (!projectRes.ok) {
+        const apiError = await readApiError(projectRes);
+        throw new Error(`Failed to create project (${projectRes.status})${apiError ? `: ${apiError}` : ''}`);
+      }
+      const { projectId } = await projectRes.json();
+
+      if (projectFiles.length > 0) {
+        const uploadedFiles = [];
+
+        for (const file of projectFiles) {
+          const signRes = await fetch('/api/uploads/sign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId, originalName: file.name, contentType: file.type })
+          });
+          if (!signRes.ok) {
+            const apiError = await readApiError(signRes);
+            throw new Error(`Failed to prepare upload (${signRes.status})${apiError ? `: ${apiError}` : ''}`);
+          }
+          const { upload } = await signRes.json();
+
+          const { data, error } = await supabase.storage
+            .from(upload.bucket)
+            .uploadToSignedUrl(upload.path, upload.token, file, {
+              contentType: file.type || 'application/octet-stream'
+            });
+
+          if (error) {
+            throw new Error(error.message);
+          }
+
+          uploadedFiles.push({
+            bucket: upload.bucket,
+            path: data?.path || upload.path,
+            originalName: file.name,
+            contentType: file.type || null,
+            sizeBytes: file.size
+          });
+        }
+
+        const recordRes = await fetch(`/api/projects/${projectId}/files`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: uploadedFiles })
+        });
+        if (!recordRes.ok) {
+          const apiError = await readApiError(recordRes);
+          throw new Error(`Failed to record uploaded files (${recordRes.status})${apiError ? `: ${apiError}` : ''}`);
+        }
+      }
+
+      const checkoutRes = await fetch('/api/checkout/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId })
+      });
+      if (!checkoutRes.ok) {
+        const apiError = await readApiError(checkoutRes);
+        throw new Error(`Checkout failed (${checkoutRes.status})${apiError ? `: ${apiError}` : ''}`);
+      }
+      const { url } = await checkoutRes.json();
+      window.location.assign(url);
+    } catch (error) {
+      setSubmitError(error?.message || 'Something went wrong submitting your project.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -713,31 +933,74 @@ const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceN
           Book {title}
         </h3>
         
-        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: 0 }}>
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="email" 
-              placeholder="Email Address" 
-              required
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #000000',
-                padding: '16px 0',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                fontSize: '24px',
-                color: '#000000',
-                borderRadius: 0,
-                outline: 'none'
-              }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="text" 
-              value={`${title} ($${price})`}
-              readOnly
+	        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: 0 }}>
+	          <div style={{ position: 'relative' }}>
+	            <input 
+	              type="email" 
+	              placeholder="Email Address" 
+	              required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+	              style={{
+	                width: '100%',
+	                background: 'transparent',
+	                border: 'none',
+	                borderBottom: '2px solid #000000',
+	                padding: '16px 0',
+	                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+	                fontSize: '24px',
+	                color: '#000000',
+	                borderRadius: 0,
+	                outline: 'none'
+	              }}
+	            />
+	          </div>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="text" 
+                placeholder="Full Name"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '2px solid #000000',
+                  padding: '16px 0',
+                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                  fontSize: '24px',
+                  color: '#000000',
+                  borderRadius: 0,
+                  outline: 'none'
+                }}
+              />
+            </div>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="text" 
+                placeholder="Business Name (Optional)"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '2px solid #000000',
+                  padding: '16px 0',
+                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                  fontSize: '24px',
+                  color: '#000000',
+                  borderRadius: 0,
+                  outline: 'none'
+                }}
+              />
+            </div>
+	          <div style={{ position: 'relative' }}>
+	            <input 
+	              type="text" 
+	              value={`${title} ($${price})`}
+	              readOnly
               style={{
                 width: '100%',
                 background: 'transparent',
@@ -753,20 +1016,22 @@ const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceN
               }}
             />
           </div>
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="text" 
-              placeholder={serviceName === 'residential-exterior' ? 'Project Link / DropBox (Optional)' : 
-                           serviceName === 'residential-interior' ? 'Style Preference (e.g. Minimalist)' :
-                           serviceName === 'residential-aerial' ? 'Site Location / Address' :
-                           serviceName === 'commercial-exterior' ? 'Development Name / Brand' :
-                           serviceName === 'commercial-interior' ? 'Square Footage' :
-                           'Campus / Site Address'}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #000000',
+	          <div style={{ position: 'relative' }}>
+	            <input 
+	              type="text" 
+	              placeholder={serviceName === 'residential-exterior' ? 'Project Link / DropBox (Optional)' : 
+	                           serviceName === 'residential-interior' ? 'Style Preference (e.g. Minimalist)' :
+	                           serviceName === 'residential-aerial' ? 'Site Location / Address' :
+	                           serviceName === 'commercial-exterior' ? 'Development Name / Brand' :
+	                           serviceName === 'commercial-interior' ? 'Square Footage' :
+	                           'Campus / Site Address'}
+                value={projectInfo}
+                onChange={(e) => setProjectInfo(e.target.value)}
+	              style={{
+	                width: '100%',
+	                background: 'transparent',
+	                border: 'none',
+	                borderBottom: '2px solid #000000',
                 padding: '16px 0',
                 fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
                 fontSize: '24px',
@@ -778,22 +1043,27 @@ const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceN
           </div>
 
           <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '20px 0', border: 'none' }} />
-          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-            Project Files
-          </h3>
-          
-          <FileUpload id={`files-${serviceName}`} fileListId={`file-list-${serviceName}`} />
+	          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
+	            Project Files
+	          </h3>
+	          
+	          <FileUpload
+              id={`files-${serviceName}`}
+              fileListId={`file-list-${serviceName}`}
+              onFilesChange={setProjectFiles}
+            />
 
           <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '20px 0', border: 'none' }} />
-          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-            Payment Method
-          </h3>
-          
-          <PaymentOptions name={`payment-${serviceName}`} />
+	          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
+	            Checkout
+	          </h3>
+	          <p style={{ fontSize: '16px', lineHeight: 1.6, opacity: 0.7, marginTop: '-12px' }}>
+              Taxes are calculated at checkout.
+            </p>
 
-          <div style={{ marginTop: '40px', padding: '24px', border: '2px solid #000000' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <span style={{ fontWeight: 500 }}>{title} (4K)</span>
+	          <div style={{ marginTop: '40px', padding: '24px', border: '2px solid #000000' }}>
+	            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+	              <span style={{ fontWeight: 500 }}>{title} (4K)</span>
               <span>${price}</span>
             </div>
             <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', opacity: 0.2, margin: '16px 0', border: 'none' }} />
@@ -803,31 +1073,38 @@ const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceN
             </div>
           </div>
 
-          <button 
-            type="submit"
-            style={{
-              background: 'transparent',
-              border: '2px solid #000000',
-              textAlign: 'center',
-              fontSize: '28px',
-              fontWeight: 400,
-              cursor: 'pointer',
-              padding: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              transition: 'color 0.2s',
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              marginTop: '32px',
-              width: '100%'
-            }}
-          >
-            Proceed to Payment <span>→</span>
-          </button>
-        </form>
-      </section>
-    </>
+	          <button 
+	            type="submit"
+              disabled={isSubmitting}
+	            style={{
+	              background: 'transparent',
+	              border: '2px solid #000000',
+	              textAlign: 'center',
+	              fontSize: '28px',
+	              fontWeight: 400,
+	              cursor: isSubmitting ? 'default' : 'pointer',
+	              padding: '24px',
+	              display: 'flex',
+	              alignItems: 'center',
+	              justifyContent: 'center',
+	              gap: '10px',
+	              transition: 'color 0.2s',
+	              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+	              marginTop: '32px',
+	              width: '100%',
+                opacity: isSubmitting ? 0.6 : 1
+	            }}
+	          >
+	            {buttonLabel} <span>→</span>
+	          </button>
+            {!!submitError && (
+              <p style={{ marginTop: '12px', fontSize: '13px', color: '#FF4500' }}>
+                {submitError}
+              </p>
+            )}
+	        </form>
+	      </section>
+	    </>
   );
 };
 
@@ -995,18 +1272,83 @@ const PortfolioDetailPage = ({ items }) => {
 
 const ConfirmationPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const paymentMethod = location?.state?.paymentMethod;
+  const serviceTitle = location?.state?.title;
+  const servicePrice = location?.state?.price;
+  const searchParams = new URLSearchParams(location?.search || '');
+  const stripeSessionId = searchParams.get('session_id');
+  const [stripeSessionStatus, setStripeSessionStatus] = useState(null);
+
+  useEffect(() => {
+    if (!stripeSessionId) {
+      return;
+    }
+    let cancelled = false;
+    const loadStatus = async () => {
+      try {
+        const res = await fetch(`/api/checkout/session-status?session_id=${encodeURIComponent(stripeSessionId)}`);
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled) {
+          setStripeSessionStatus(data?.session?.payment_status || null);
+        }
+      } catch (error) {
+        // ignore
+      }
+    };
+    loadStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [stripeSessionId]);
 
   return (
     <section style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeIn 0.5s ease-out' }}>
       <div style={{ fontSize: '64px', marginBottom: '32px' }}>✓</div>
       <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '20px' }}>
-        Order Confirmed
+        {paymentMethod === 'wire-transfer' ? 'Wire Transfer Started' : 'Order Confirmed'}
       </h2>
       <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px auto', maxWidth: '400px', border: 'none' }} />
       <p style={{ fontSize: '20px', lineHeight: 1.6, opacity: 0.8, marginBottom: '40px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
-        Thank you for your order. We've received your project details and will begin work immediately.
+        {paymentMethod === 'wire-transfer'
+          ? 'We’ve saved your request. Send your wire using the details below to kick off production.'
+          : "Thank you for your order. We've received your project details and will begin work immediately."}
       </p>
-      
+
+      {!!stripeSessionId && (
+        <p style={{ fontSize: '14px', opacity: 0.6, marginBottom: '16px' }}>
+          Payment status: {stripeSessionStatus || 'checking…'}
+        </p>
+      )}
+
+      {paymentMethod === 'wire-transfer' && (
+        <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '24px', margin: '24px auto 40px auto', textAlign: 'left', maxWidth: '680px' }}>
+          <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>
+            Wire Details
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px', fontSize: '16px', lineHeight: 1.6, opacity: 0.9 }}>
+            <span style={{ fontWeight: 600 }}>Bank Name</span>
+            <span>YOUR BANK NAME</span>
+            <span style={{ fontWeight: 600 }}>Account Name</span>
+            <span>RENDER AI LLC</span>
+            <span style={{ fontWeight: 600 }}>Routing</span>
+            <span>XXXXXX</span>
+            <span style={{ fontWeight: 600 }}>Account</span>
+            <span>XXXXXX</span>
+            <span style={{ fontWeight: 600 }}>SWIFT</span>
+            <span>XXXXXX</span>
+            <span style={{ fontWeight: 600 }}>Memo</span>
+            <span>{serviceTitle ? `${serviceTitle}${servicePrice ? ` ($${servicePrice})` : ''}` : 'Your project name'}</span>
+          </div>
+          <p style={{ marginTop: '16px', fontSize: '14px', opacity: 0.7 }}>
+            Reply to your confirmation email if you need a secure portal link.
+          </p>
+        </div>
+      )}
+	      
       <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '40px', margin: '40px 0', textAlign: 'left' }}>
         <h3 style={{ fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '24px', letterSpacing: '0.05em' }}>
           What Happens Next
@@ -1326,24 +1668,25 @@ const App = () => {
     loadPortfolio();
   }, []);
 
-  return (
-    <Router basename="/">
-      <ScrollToHash />
-      <div style={customStyles.root} data-app="render-ai">
-        <div style={customStyles.container}>
-          <Header />
-          
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
-            <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
-            <Route path="/residential-exterior" element={
-              <ServiceDetailPage 
+	  return (
+	    <Router basename="/">
+	      <ScrollToHash />
+	      <div style={customStyles.root} data-app="render-ai">
+	        <div style={customStyles.container}>
+	          <Header />
+	          
+	          <Routes>
+	            <Route path="/" element={<HomePage portfolioItems={portfolioItems} />} />
+	            <Route path="/about" element={<AboutPage />} />
+	            <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
+	            <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
+	            <Route path="/residential-exterior" element={
+	              <ServiceDetailPage 
                 price="500"
                 title="Residential Exterior"
                 subtitle="Photorealistic visualization for single-family homes to showcase architectural intent and curb appeal."
                 serviceName="residential-exterior"
+                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
                 includes={[
                   "1 High-Res Rendering (4k)",
                   "Environment Integration (Day/Dusk)",
@@ -1366,6 +1709,7 @@ const App = () => {
                 title="Residential Interior"
                 subtitle="Detailed interior staging focused on living spaces, furniture curation, and atmospheric lighting."
                 serviceName="residential-interior"
+                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
                 includes={[
                   "1 High-Res Rendering (4k)",
                   "Custom Furniture Selection",
@@ -1388,6 +1732,7 @@ const App = () => {
                 title="Residential Aerial"
                 subtitle="Drone-view perspective to establish neighborhood context, landscaping, and property boundaries."
                 serviceName="residential-aerial"
+                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
                 includes={[
                   "1 Wide-Angle Aerial View",
                   "Full Site Modeling",
@@ -1410,6 +1755,7 @@ const App = () => {
                 title="Commercial Exterior"
                 subtitle="Striking visuals for retail, office, and mixed-use developments focused on scale and branding."
                 serviceName="commercial-exterior"
+                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
                 includes={[
                   "1 Hero Shot (Street Level)",
                   "Commercial Entourage (People/Cars)",
@@ -1431,6 +1777,7 @@ const App = () => {
                 title="Commercial Interior"
                 subtitle="Office, retail, and hospitality interiors that communicate flow, capacity, and atmosphere."
                 serviceName="commercial-interior"
+                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
                 includes={[
                   "1 Perspective View",
                   "Office/Retail Furniture Systems",
@@ -1453,6 +1800,7 @@ const App = () => {
                 title="Commercial Aerial"
                 subtitle="Bird's eye perspective for office parks, retail centers, and mixed-use developments showcasing site planning and scale."
                 serviceName="commercial-aerial"
+                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
                 includes={[
                   "1 Wide-Angle Campus View",
                   "Multi-Building Site Modeling",

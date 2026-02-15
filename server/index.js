@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import Stripe from 'stripe';
@@ -139,7 +140,7 @@ app.post('/api/admin/login', async (req, res) => {
   if (email.toLowerCase() !== adminEmail) {
     return res.status(403).json({ error: 'Forbidden' });
   }
-  if (!crypto.timingSafeEqual(Buffer.from(password), Buffer.from(adminPassword))) {
+  if (password.length !== adminPassword.length || !crypto.timingSafeEqual(Buffer.from(password), Buffer.from(adminPassword))) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
   const token = makeSessionToken({ email: adminEmail, exp: Date.now() + 1000 * 60 * 60 * 24 * 7 }, sessionSecret);
@@ -619,7 +620,18 @@ app.get('/api/checkout/session-status', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`[api] listening on http://localhost:${PORT}`);
+});
+
+server.on('error', (error) => {
+  if (error?.code === 'EADDRINUSE') {
+    // eslint-disable-next-line no-console
+    console.error(`[api] PORT ${PORT} is already in use. Stop the existing process or change PORT in .env, then restart.`);
+    process.exit(1);
+  }
+  // eslint-disable-next-line no-console
+  console.error('[api] server failed to start', error);
+  process.exit(1);
 });

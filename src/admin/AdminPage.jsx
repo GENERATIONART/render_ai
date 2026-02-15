@@ -136,8 +136,16 @@ const TimelineEditor = ({ value, onChange }) => {
   );
 };
 
+const createSupabaseBrowserSafe = () => {
+  try {
+    return { client: getSupabaseBrowser(), error: '' };
+  } catch (e) {
+    return { client: null, error: e?.message || 'Supabase browser client is not configured.' };
+  }
+};
+
 const PortfolioEditor = () => {
-  const supabase = useMemo(() => getSupabaseBrowser(), []);
+  const { client: supabase, error: supabaseError } = useMemo(() => createSupabaseBrowserSafe(), []);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -248,6 +256,9 @@ const PortfolioEditor = () => {
     setUploading(true);
     setError('');
     try {
+      if (!supabase) {
+        throw new Error(supabaseError || 'Supabase browser client is not configured.');
+      }
       const signRes = await fetch('/api/admin/site-media/sign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -278,6 +289,11 @@ const PortfolioEditor = () => {
 
   return (
     <div>
+      {!!supabaseError && (
+        <p style={{ color: '#FF4500', marginTop: 12 }}>
+          {supabaseError} Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env.local`, then restart the frontend to enable media uploads.
+        </p>
+      )}
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <div style={{ fontSize: 14, opacity: 0.7 }}>
           {loading ? 'Loading…' : `${items.length} item(s)`}
@@ -597,6 +613,7 @@ export const AdminPage = () => {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -605,8 +622,10 @@ export const AdminPage = () => {
         const data = await res.json().catch(() => ({}));
         setAuthenticated(!!data.authenticated);
         setSessionEmail(data.email || '');
+        setSessionLoading(false);
       } catch {
         setAuthenticated(false);
+        setSessionLoading(false);
       }
     };
     load();
@@ -638,6 +657,14 @@ export const AdminPage = () => {
     setAuthenticated(false);
     setSessionEmail('');
   };
+
+  if (sessionLoading) {
+    return (
+      <Section title="Admin" subtitle="Loading session…">
+        <p style={{ fontSize: 14, opacity: 0.7 }}>Checking authentication…</p>
+      </Section>
+    );
+  }
 
   if (!authenticated) {
     return (

@@ -4,6 +4,36 @@ import portfolioData from './portfolioData.js';
 import { getSupabaseBrowser } from './lib/supabaseBrowser.js';
 import { AdminPage } from './admin/AdminPage.jsx';
 
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <section style={{ padding: '40px 0', animation: 'fadeIn 0.35s ease-out' }}>
+          <h2 style={{ fontSize: 'clamp(24px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '16px' }}>
+            Something went wrong
+          </h2>
+          <p style={{ fontSize: '16px', opacity: 0.75, lineHeight: 1.5 }}>
+            {this.state.error?.message || String(this.state.error)}
+          </p>
+          <p style={{ fontSize: '12px', opacity: 0.6, marginTop: '12px' }}>
+            Open DevTools Console for the full stack trace.
+          </p>
+        </section>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const customStyles = {
   container: {
     width: '100%',
@@ -208,256 +238,6 @@ const Footer = () => (
   </footer>
 );
 
-const HomeGallery = ({ items }) => {
-  const slides = (Array.isArray(items) && items.length > 0 ? items : portfolioData).slice(0, 8);
-  const containerRef = React.useRef(null);
-  const slideRefs = React.useRef([]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  const scrollToIndex = (nextIndex) => {
-    const node = slideRefs.current[nextIndex];
-    if (!node) {
-      return;
-    }
-    const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-    node.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', inline: 'start', block: 'nearest' });
-  };
-
-  useEffect(() => {
-    if (slides.length <= 1 || paused) {
-      return;
-    }
-    const id = window.setInterval(() => {
-      setActiveIndex((prev) => {
-        const next = (prev + 1) % slides.length;
-        scrollToIndex(next);
-        return next;
-      });
-    }, 6500);
-    return () => window.clearInterval(id);
-  }, [paused, slides.length]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) {
-      return;
-    }
-    let raf = 0;
-    const onScroll = () => {
-      window.cancelAnimationFrame(raf);
-      raf = window.requestAnimationFrame(() => {
-        const left = el.scrollLeft;
-        let bestIndex = 0;
-        let bestDistance = Infinity;
-        for (let i = 0; i < slideRefs.current.length; i += 1) {
-          const node = slideRefs.current[i];
-          if (!node) continue;
-          const d = Math.abs(node.offsetLeft - left);
-          if (d < bestDistance) {
-            bestDistance = d;
-            bestIndex = i;
-          }
-        }
-        setActiveIndex(bestIndex);
-      });
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.cancelAnimationFrame(raf);
-      el.removeEventListener('scroll', onScroll);
-    };
-  }, [slides.length]);
-
-  if (slides.length === 0) {
-    return null;
-  }
-
-  return (
-    <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
-        <div>
-          <h3 style={{ fontWeight: 900, fontSize: '24px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-            Selected Work
-          </h3>
-          <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4, maxWidth: '640px' }}>
-            A quick look at the range: residential, commercial, interiors, aerials.
-          </p>
-        </div>
-        <Link to="/portfolio" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', opacity: 0.7, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            View Portfolio <span>→</span>
-          </div>
-        </Link>
-      </div>
-
-      <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '24px 0', border: 'none' }} />
-
-      <div
-        style={{ position: 'relative' }}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onFocusCapture={() => setPaused(true)}
-        onBlurCapture={() => setPaused(false)}
-      >
-        <div
-          ref={containerRef}
-          style={{
-            display: 'flex',
-            gap: '18px',
-            overflowX: 'auto',
-            scrollSnapType: 'x mandatory',
-            paddingBottom: '6px',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          {slides.map((item, i) => (
-            <Link
-              key={item.slug || i}
-              to={item.slug ? `/portfolio/${item.slug}` : '/portfolio'}
-              aria-label={item.title ? `Open ${item.title}` : 'Open portfolio item'}
-              style={{
-                textDecoration: 'none',
-                color: 'inherit',
-                flex: '0 0 clamp(280px, 78vw, 860px)',
-                scrollSnapAlign: 'start'
-              }}
-            >
-              <div
-                ref={(node) => {
-                  slideRefs.current[i] = node;
-                }}
-                data-slide
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  aspectRatio: '16/9',
-                  backgroundColor: '#E0E0E0',
-                  overflow: 'hidden',
-                  border: '2px solid #000000'
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    backgroundImage: `url('${item.image}')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    transform: activeIndex === i ? 'scale(1.02)' : 'scale(1)',
-                    transition: 'transform 700ms ease'
-                  }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background:
-                      'linear-gradient(180deg, rgba(0,0,0,0.00) 35%, rgba(0,0,0,0.75) 100%)'
-                  }}
-                />
-                <div style={{ position: 'absolute', left: 16, right: 16, bottom: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.85)' }}>
-                        {item.tag || 'Project'}
-                      </div>
-                      <div style={{ fontSize: '20px', fontWeight: 600, letterSpacing: '-0.02em', color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.title || 'Untitled'}
-                      </div>
-                    </div>
-                    <div style={{ fontFamily: 'monospace', fontSize: '12px', color: 'rgba(255,255,255,0.85)' }}>
-                      {String(i + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          aria-label="Previous image"
-          onClick={() => {
-            const next = (activeIndex - 1 + slides.length) % slides.length;
-            setActiveIndex(next);
-            scrollToIndex(next);
-          }}
-          style={{
-            position: 'absolute',
-            left: 10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            border: '2px solid #000000',
-            background: 'rgba(244,244,244,0.92)',
-            color: '#000000',
-            width: 44,
-            height: 44,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 18
-          }}
-        >
-          ←
-        </button>
-        <button
-          type="button"
-          aria-label="Next image"
-          onClick={() => {
-            const next = (activeIndex + 1) % slides.length;
-            setActiveIndex(next);
-            scrollToIndex(next);
-          }}
-          style={{
-            position: 'absolute',
-            right: 10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            border: '2px solid #000000',
-            background: 'rgba(244,244,244,0.92)',
-            color: '#000000',
-            width: 44,
-            height: 44,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 18
-          }}
-        >
-          →
-        </button>
-
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '16px' }}>
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Go to slide ${i + 1}`}
-              onClick={() => {
-                setActiveIndex(i);
-                scrollToIndex(i);
-              }}
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: 999,
-                border: '2px solid #000000',
-                background: i === activeIndex ? '#000000' : 'transparent',
-                cursor: 'pointer',
-                padding: 0
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
 const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline }) => {
   const navigate = useNavigate();
 
@@ -471,21 +251,19 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline }) => {
     heroSubheadline ||
     'High fidelity renderings for Interior Designers, Architects, Builders, Real Estate Developers, Real Estate Agents, and Homeowners starting at';
 
-  return (
-    <>
+	  return (
+	    <>
       <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
         <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
         <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
           {headlineText} <br />
           {subheadlineText} <span style={{ color: '#FF4500' }}>$500</span>.
         </h2>
-      </section>
+	      </section>
 
-      <HomeGallery items={portfolioItems} />
-
-      <section id="services" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
-        
+	      <section id="services" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+	        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
+	        
         <ServiceRow price="500" title="Residential Exterior" tag="24H Turnaround" onClick={() => navigate('/residential-exterior')} />
         <ServiceRow price="750" title="Residential Interior" tag="Living Spaces" onClick={() => navigate('/residential-interior')} />
         <ServiceRow price="850" title="Residential Aerial" tag="Neighborhood View" onClick={() => navigate('/residential-aerial')} />
@@ -1734,166 +1512,168 @@ const App = () => {
 	        <div style={customStyles.container}>
 	          <Header />
 	          
-	          <Routes>
-	            <Route
-                path="/"
-                element={
-                  <HomePage
-                    portfolioItems={portfolioItems}
-                    heroHeadline={siteCopy['home.hero_headline']}
-                    heroSubheadline={siteCopy['home.hero_subheadline']}
+            <AppErrorBoundary>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <HomePage
+                      portfolioItems={portfolioItems}
+                      heroHeadline={siteCopy['home.hero_headline']}
+                      heroSubheadline={siteCopy['home.hero_subheadline']}
+                    />
+                  }
+                />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
+                <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
+                <Route path="/residential-exterior" element={
+                  <ServiceDetailPage 
+                    price="500"
+                    title="Residential Exterior"
+                    subtitle="Photorealistic visualization for single-family homes to showcase architectural intent and curb appeal."
+                    serviceName="residential-exterior"
+                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
+                    includes={[
+                      "1 High-Res Rendering (4k)",
+                      "Environment Integration (Day/Dusk)",
+                      "Landscape & Vegetation",
+                      "Standard Material Library",
+                      "2 Rounds of Revisions",
+                      "24-Hour Turnaround"
+                    ]}
+                    process={[
+                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                      { title: "Material Setup", description: "We apply textures based on your moodboard or specs." },
+                      { title: "Lighting Draft", description: "Review low-res lighting pass for approval." },
+                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                    ]}
                   />
-                }
-              />
-              <Route path="/admin" element={<AdminPage />} />
-	            <Route path="/about" element={<AboutPage />} />
-	            <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
-	            <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
-	            <Route path="/residential-exterior" element={
-	              <ServiceDetailPage 
-                price="500"
-                title="Residential Exterior"
-                subtitle="Photorealistic visualization for single-family homes to showcase architectural intent and curb appeal."
-                serviceName="residential-exterior"
-                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                includes={[
-                  "1 High-Res Rendering (4k)",
-                  "Environment Integration (Day/Dusk)",
-                  "Landscape & Vegetation",
-                  "Standard Material Library",
-                  "2 Rounds of Revisions",
-                  "24-Hour Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                  { title: "Material Setup", description: "We apply textures based on your moodboard or specs." },
-                  { title: "Lighting Draft", description: "Review low-res lighting pass for approval." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
-              />
-            } />
-            <Route path="/residential-interior" element={
-              <ServiceDetailPage 
-                price="750"
-                title="Residential Interior"
-                subtitle="Detailed interior staging focused on living spaces, furniture curation, and atmospheric lighting."
-                serviceName="residential-interior"
-                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                includes={[
-                  "1 High-Res Rendering (4k)",
-                  "Custom Furniture Selection",
-                  "Complex Lighting Setup",
-                  "Soft Goods & Decor Details",
-                  "3 Rounds of Revisions",
-                  "48-Hour Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                  { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
-                  { title: "Draft Review", description: "Check angles, textures, and lighting balance." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
-              />
-            } />
-            <Route path="/residential-aerial" element={
-              <ServiceDetailPage 
-                price="850"
-                title="Residential Aerial"
-                subtitle="Drone-view perspective to establish neighborhood context, landscaping, and property boundaries."
-                serviceName="residential-aerial"
-                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                includes={[
-                  "1 Wide-Angle Aerial View",
-                  "Full Site Modeling",
-                  "Surrounding Context (Ghosted or Detailed)",
-                  "Vegetation & Topography",
-                  "3 Rounds of Revisions",
-                  "3-Day Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
-                  { title: "Massing", description: "We establish the scale of the building vs the environment." },
-                  { title: "Environment", description: "Adding trees, roads, cars, and neighboring structures." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
-              />
-            } />
-            <Route path="/commercial-exterior" element={
-              <ServiceDetailPage 
-                price="850"
-                title="Commercial Exterior"
-                subtitle="Striking visuals for retail, office, and mixed-use developments focused on scale and branding."
-                serviceName="commercial-exterior"
-                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                includes={[
-                  "1 Hero Shot (Street Level)",
-                  "Commercial Entourage (People/Cars)",
-                  "Signage & Branding Integration",
-                  "Glass & Facade Detailing",
-                  "3 Rounds of Revisions",
-                  "3-4 Day Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                  { title: "Brand Integration", description: "Placement of logos, signage, and brand colors." },
-                  { title: "Life & Activity", description: "Populating the scene with shoppers, workers, and activity." }
-                ]}
-              />
-            } />
-            <Route path="/commercial-interior" element={
-              <ServiceDetailPage 
-                price="950"
-                title="Commercial Interior"
-                subtitle="Office, retail, and hospitality interiors that communicate flow, capacity, and atmosphere."
-                serviceName="commercial-interior"
-                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                includes={[
-                  "1 Perspective View",
-                  "Office/Retail Furniture Systems",
-                  "Advanced Lighting (Artificial)",
-                  "Entourage (People working/shopping)",
-                  "4 Rounds of Revisions",
-                  "5 Day Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                  { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
-                  { title: "Lighting Design", description: "IES profiles for accurate artificial lighting simulation." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
-              />
-            } />
-            <Route path="/commercial-aerial" element={
-              <ServiceDetailPage 
-                price="950"
-                title="Commercial Aerial"
-                subtitle="Bird's eye perspective for office parks, retail centers, and mixed-use developments showcasing site planning and scale."
-                serviceName="commercial-aerial"
-                stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                includes={[
-                  "1 Wide-Angle Campus View",
-                  "Multi-Building Site Modeling",
-                  "Parking & Infrastructure",
-                  "Signage & Branding",
-                  "4 Rounds of Revisions",
-                  "5-Day Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
-                  { title: "Site Layout", description: "We model the campus, parking lots, and access roads." },
-                  { title: "Context Building", description: "Adding surrounding buildings, vehicles, and landscaping." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
-              />
-            } />
-            <Route path="/confirmation" element={<ConfirmationPage />} />
-            <Route path="/inquiry-confirmation" element={<InquiryConfirmationPage />} />
-          </Routes>
-          
-          <Footer />
-        </div>
-      </div>
-    </Router>
+                } />
+                <Route path="/residential-interior" element={
+                  <ServiceDetailPage 
+                    price="750"
+                    title="Residential Interior"
+                    subtitle="Detailed interior staging focused on living spaces, furniture curation, and atmospheric lighting."
+                    serviceName="residential-interior"
+                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
+                    includes={[
+                      "1 High-Res Rendering (4k)",
+                      "Custom Furniture Selection",
+                      "Complex Lighting Setup",
+                      "Soft Goods & Decor Details",
+                      "3 Rounds of Revisions",
+                      "48-Hour Turnaround"
+                    ]}
+                    process={[
+                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                      { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
+                      { title: "Draft Review", description: "Check angles, textures, and lighting balance." },
+                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                    ]}
+                  />
+                } />
+                <Route path="/residential-aerial" element={
+                  <ServiceDetailPage 
+                    price="850"
+                    title="Residential Aerial"
+                    subtitle="Drone-view perspective to establish neighborhood context, landscaping, and property boundaries."
+                    serviceName="residential-aerial"
+                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
+                    includes={[
+                      "1 Wide-Angle Aerial View",
+                      "Full Site Modeling",
+                      "Surrounding Context (Ghosted or Detailed)",
+                      "Vegetation & Topography",
+                      "3 Rounds of Revisions",
+                      "3-Day Turnaround"
+                    ]}
+                    process={[
+                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
+                      { title: "Massing", description: "We establish the scale of the building vs the environment." },
+                      { title: "Environment", description: "Adding trees, roads, cars, and neighboring structures." },
+                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                    ]}
+                  />
+                } />
+                <Route path="/commercial-exterior" element={
+                  <ServiceDetailPage 
+                    price="850"
+                    title="Commercial Exterior"
+                    subtitle="Striking visuals for retail, office, and mixed-use developments focused on scale and branding."
+                    serviceName="commercial-exterior"
+                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
+                    includes={[
+                      "1 Hero Shot (Street Level)",
+                      "Commercial Entourage (People/Cars)",
+                      "Signage & Branding Integration",
+                      "Glass & Facade Detailing",
+                      "3 Rounds of Revisions",
+                      "3-4 Day Turnaround"
+                    ]}
+                    process={[
+                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                      { title: "Brand Integration", description: "Placement of logos, signage, and brand colors." },
+                      { title: "Life & Activity", description: "Populating the scene with shoppers, workers, and activity." }
+                    ]}
+                  />
+                } />
+                <Route path="/commercial-interior" element={
+                  <ServiceDetailPage 
+                    price="950"
+                    title="Commercial Interior"
+                    subtitle="Office, retail, and hospitality interiors that communicate flow, capacity, and atmosphere."
+                    serviceName="commercial-interior"
+                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
+                    includes={[
+                      "1 Perspective View",
+                      "Office/Retail Furniture Systems",
+                      "Advanced Lighting (Artificial)",
+                      "Entourage (People working/shopping)",
+                      "4 Rounds of Revisions",
+                      "5 Day Turnaround"
+                    ]}
+                    process={[
+                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                      { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
+                      { title: "Lighting Design", description: "IES profiles for accurate artificial lighting simulation." },
+                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                    ]}
+                  />
+                } />
+                <Route path="/commercial-aerial" element={
+                  <ServiceDetailPage 
+                    price="950"
+                    title="Commercial Aerial"
+                    subtitle="Bird's eye perspective for office parks, retail centers, and mixed-use developments showcasing site planning and scale."
+                    serviceName="commercial-aerial"
+                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
+                    includes={[
+                      "1 Wide-Angle Campus View",
+                      "Multi-Building Site Modeling",
+                      "Parking & Infrastructure",
+                      "Signage & Branding",
+                      "4 Rounds of Revisions",
+                      "5-Day Turnaround"
+                    ]}
+                    process={[
+                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
+                      { title: "Site Layout", description: "We model the campus, parking lots, and access roads." },
+                      { title: "Context Building", description: "Adding surrounding buildings, vehicles, and landscaping." },
+                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                    ]}
+                  />
+                } />
+                <Route path="/confirmation" element={<ConfirmationPage />} />
+                <Route path="/inquiry-confirmation" element={<InquiryConfirmationPage />} />
+              </Routes>
+            </AppErrorBoundary>
+	          
+	          <Footer />
+	        </div>
+	      </div>
+	    </Router>
   );
 };
 

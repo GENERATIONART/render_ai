@@ -83,3 +83,22 @@ Access is restricted by the API server (no Supabase Auth):
 - Set `ADMIN_SESSION_SECRET` to a long random string
 
 Then sign in at `/admin`.
+
+## Deploy to Vercel (frontend + API)
+
+This repo includes Vercel Serverless Functions under `api/[...path].js`, so `/api/*` works on your Vercel domain (no separate server to deploy).
+
+In Vercel Project Settings → Environment Variables, set (Functions/runtime):
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_STORAGE_BUCKET`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_TAX_CODE` (optional)
+- `APP_URL` (set to your Vercel domain, e.g. `https://your-site.vercel.app`)
+- `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`
+- Email notifications (optional): `OWNER_EMAIL`, `RESEND_API_KEY`, `RESEND_FROM`
+
+For the browser (Build-time env vars):
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`

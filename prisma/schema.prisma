@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  status           String        @default("created")
+  email            String
+  customerName     String?       @map("customer_name")
+  businessName     String?       @map("business_name")
+  serviceName      String        @map("service_name")
+  projectInfo      String?       @map("project_info")
+  amountCents      Int?          @map("amount_cents")
+  currency         String        @default("usd")
+  checkoutSessionId String?      @map("checkout_session_id")
+  paymentStatus    String        @default("unpaid") @map("payment_status")
+
+  files            ProjectFile[]
+
+  @@index([createdAt(sort: Desc)], map: "projects_created_at_idx")
+  @@index([email], map: "projects_email_idx")
+  @@map("projects")
+}
+
+model ProjectFile {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  projectId    String   @map("project_id") @db.Uuid
+  bucket       String
+  path         String
+  originalName String   @map("original_name")
+  contentType  String?  @map("content_type")
+  sizeBytes    BigInt?  @map("size_bytes")
+
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId], map: "project_files_project_id_idx")
+  @@map("project_files")
+}
+
+model StripeWebhookEvent {
+  id        String   @id
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("stripe_webhook_events")
+}
+
+model SiteCopy {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("site_copy")
+}
+
+model PortfolioItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  slug        String   @unique
+  title       String
+  tag         String?
+  location    String?
+  renderTime  String?  @map("render_time")
+  imageUrl    String?  @map("image_url")
+  brief       String?
+  scope       String?
+  deliverables Json    @default(dbgenerated("'[]'::jsonb"))
+  tools       Json     @default(dbgenerated("'[]'::jsonb"))
+  timeline    Json     @default(dbgenerated("'[]'::jsonb"))
+
+  @@map("portfolio_items")
+}

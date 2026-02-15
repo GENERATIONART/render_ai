@@ -29,10 +29,18 @@ Minimum required:
 
 3) Create DB tables in Supabase
 
-Run the SQL in `supabase/migrations/001_init.sql`.
-If you already ran the initial migration earlier, also run `supabase/migrations/002_add_customer_fields.sql`.
-For the admin site + content management, also run `supabase/migrations/003_admin_content.sql`.
-If you previously enabled Supabase-Auth-based admin policies, run `supabase/migrations/004_remove_supabase_auth_admin.sql`.
+Preferred (Prisma):
+
+- Set `DATABASE_URL` to your Supabase Postgres connection string (Project Settings → Database → Connection string).
+- Run `npm run prisma:migrate:deploy` to apply `prisma/migrations/*`.
+- This creates the default upload bucket `project-files`; if you changed `SUPABASE_STORAGE_BUCKET`, create a bucket with that id in Supabase Storage too.
+
+If you already created tables manually in Supabase, either:
+- start from a fresh Supabase project, or
+- baseline the existing DB by marking the migration as applied:
+  - `npx prisma migrate resolve --applied 20260215140000_init`
+
+Legacy option (Supabase SQL editor): run the SQL in `supabase/migrations/*.sql`.
 
 4) Enable Stripe Tax
 

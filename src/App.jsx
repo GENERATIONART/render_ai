@@ -936,6 +936,8 @@ const PortfolioDetailPage = ({ items }) => {
     ? item.images
     : (item?.image ? [item.image] : []);
   const [activeIndex, setActiveIndex] = useState(0);
+  const touchStart = React.useRef({ x: 0, y: 0, time: 0 });
+  const touchDelta = React.useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     setActiveIndex(0);
@@ -992,7 +994,32 @@ const PortfolioDetailPage = ({ items }) => {
       </div>
 
       <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <div style={{
+        <div
+          onTouchStart={(e) => {
+            const touch = e.touches[0];
+            touchStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+            touchDelta.current = { x: 0, y: 0 };
+          }}
+          onTouchMove={(e) => {
+            const touch = e.touches[0];
+            touchDelta.current = {
+              x: touch.clientX - touchStart.current.x,
+              y: touch.clientY - touchStart.current.y
+            };
+          }}
+          onTouchEnd={() => {
+            if (images.length < 2) return;
+            const { x, y } = touchDelta.current;
+            const absX = Math.abs(x);
+            const absY = Math.abs(y);
+            if (absX < 40 || absX < absY) return;
+            if (x < 0) {
+              setActiveIndex((prev) => (prev + 1) % images.length);
+            } else {
+              setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+            }
+          }}
+          style={{
           aspectRatio: '16/9',
           backgroundColor: '#E0E0E0',
           width: '100%',
@@ -1023,10 +1050,13 @@ const PortfolioDetailPage = ({ items }) => {
                   left: 12,
                   transform: 'translateY(-50%)',
                   border: '2px solid #000000',
-                  background: 'rgba(255,255,255,0.8)',
+                  background: 'rgba(255,255,255,0.85)',
                   padding: '10px 14px',
                   cursor: 'pointer',
-                  fontSize: 16
+                  fontSize: 16,
+                  color: '#000000',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
                 }}
               >
                 ←
@@ -1041,10 +1071,13 @@ const PortfolioDetailPage = ({ items }) => {
                   right: 12,
                   transform: 'translateY(-50%)',
                   border: '2px solid #000000',
-                  background: 'rgba(255,255,255,0.8)',
+                  background: 'rgba(255,255,255,0.85)',
                   padding: '10px 14px',
                   cursor: 'pointer',
-                  fontSize: 16
+                  fontSize: 16,
+                  color: '#000000',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
                 }}
               >
                 →

@@ -120,6 +120,7 @@ const FileUpload = ({ id, fileListId, onFilesChange }) => {
     <div style={{ margin: '40px 0' }}>
       <div 
         onClick={() => document.getElementById(id).click()}
+        data-upload-box
         style={{
           border: '2px dashed #000000',
           padding: '40px 24px',
@@ -129,7 +130,7 @@ const FileUpload = ({ id, fileListId, onFilesChange }) => {
           background: 'transparent'
         }}
       >
-        <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.3 }}>📁</div>
+        <div data-upload-icon style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.3 }}>📁</div>
         <div style={{ fontSize: '18px', fontWeight: 500, marginBottom: '8px' }}>Click to upload or drag files here</div>
         <div style={{ fontSize: '14px', opacity: 0.6 }}>All file types accepted: CAD, images, PDFs, sketches, photos, videos (Max 100MB per file)</div>
       </div>
@@ -142,9 +143,9 @@ const FileUpload = ({ id, fileListId, onFilesChange }) => {
         accept="*"
       />
       {files.length > 0 && (
-        <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div data-upload-list style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {files.map((file, index) => (
-            <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #000000', fontSize: '14px' }}>
+            <div data-upload-item key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #000000', fontSize: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span>📄</span>
                 <span>{file.name}</span>
@@ -219,7 +220,7 @@ const Header = () => {
 };
 
 const Footer = () => (
-  <footer style={{
+  <footer data-footer style={{
     display: 'flex',
     justifyContent: 'space-between',
     marginTop: '40px',
@@ -1547,41 +1548,64 @@ const App = () => {
           gap: 14px !important;
         }
         [data-portfolio-title] {
-          font-size: 22px !important;
-          letter-spacing: -0.01em !important;
+          font-size: 20px !important;
+          letter-spacing: -0.005em !important;
         }
         [data-portfolio-meta] {
-          gap: 10px 16px !important;
+          display: grid !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          gap: 6px 8px !important;
         }
         [data-portfolio-pill] {
-          flex: 0 0 auto !important;
           white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
         }
         [data-app] [style*="gridTemplateColumns: '100px 1fr auto'"] {
           grid-template-columns: 70px 1fr auto !important;
           gap: 12px !important;
         }
         [data-portfolio-cta] {
-          justify-content: flex-start !important;
-          text-align: left !important;
+          justify-content: flex-end !important;
+          text-align: right !important;
           white-space: normal !important;
         }
         [data-service-row] {
-          padding: 26px 0 !important;
+          padding: 22px 0 !important;
+          grid-template-columns: 1fr !important;
+          gap: 8px !important;
         }
         [data-service-price] {
-          font-size: 26px !important;
+          font-size: 22px !important;
         }
         [data-service-title] {
-          font-size: 26px !important;
-          line-height: 1.12 !important;
+          font-size: 24px !important;
+          line-height: 1.15 !important;
+        }
+        [data-service-title] span {
+          display: block !important;
+          margin-left: 0 !important;
+          font-size: 13px !important;
         }
         [data-service-cta] {
           font-size: 16px !important;
+          justify-content: flex-start !important;
         }
-        [data-service-title] span {
-          font-size: 13px !important;
-          margin-left: 8px !important;
+        [data-upload-box] {
+          padding: 24px 16px !important;
+        }
+        [data-upload-icon] {
+          font-size: 34px !important;
+          margin-bottom: 10px !important;
+        }
+        [data-upload-item] {
+          font-size: 12px !important;
+          padding: 10px 12px !important;
+        }
+        [data-footer] {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 10px !important;
         }
         [data-app] [style*="fontSize: '32px'"] {
           font-size: 22px !important;

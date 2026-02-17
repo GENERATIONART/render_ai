@@ -550,15 +550,15 @@ const PortfolioPage = ({ items }) => {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }}></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'flex-end' }}>
+              <div data-portfolio-row style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'flex-end', gap: 20 }}>
                 <div>
-                  <div style={{ fontSize: '24px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                  <div data-portfolio-title style={{ fontSize: '24px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
                     {item.title}
                   </div>
-                  <div style={{ display: 'flex', gap: '24px', fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, marginTop: '8px' }}>
-                    <span style={{ color: '#FF4500', fontWeight: 800 }}>{item.tag}</span>
-                    <span>Location: {item.location}</span>
-                    <span>Render Time: {item.renderTime}</span>
+                  <div data-portfolio-meta style={{ display: 'flex', gap: '24px', fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, marginTop: '8px', flexWrap: 'wrap' }}>
+                    <span data-portfolio-pill style={{ color: '#FF4500', fontWeight: 800 }}>{item.tag}</span>
+                    <span data-portfolio-pill>Location: {item.location}</span>
+                    <span data-portfolio-pill>Render Time: {item.renderTime}</span>
                   </div>
                 </div>
                 <Link
@@ -1509,9 +1509,20 @@ const App = () => {
         [data-app] [style*="gridTemplateColumns: '1fr 1fr'"] {
           grid-template-columns: 1fr !important;
         }
-        [data-app] [style*="gridTemplateColumns: '1fr auto'"] {
+        [data-portfolio-row] {
           grid-template-columns: 1fr !important;
-          gap: 12px !important;
+          gap: 14px !important;
+        }
+        [data-portfolio-title] {
+          font-size: 22px !important;
+          letter-spacing: -0.01em !important;
+        }
+        [data-portfolio-meta] {
+          gap: 10px 16px !important;
+        }
+        [data-portfolio-pill] {
+          flex: 0 0 auto !important;
+          white-space: nowrap !important;
         }
         [data-app] [style*="gridTemplateColumns: '100px 1fr auto'"] {
           grid-template-columns: 70px 1fr auto !important;

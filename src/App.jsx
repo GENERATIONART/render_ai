@@ -1015,6 +1015,7 @@ const PortfolioDetailPage = ({ items }) => {
             <>
               <button
                 type="button"
+                data-carousel-button="prev"
                 onClick={() => setActiveIndex((prev) => (prev - 1 + images.length) % images.length)}
                 style={{
                   position: 'absolute',
@@ -1032,6 +1033,7 @@ const PortfolioDetailPage = ({ items }) => {
               </button>
               <button
                 type="button"
+                data-carousel-button="next"
                 onClick={() => setActiveIndex((prev) => (prev + 1) % images.length)}
                 style={{
                   position: 'absolute',
@@ -1052,6 +1054,7 @@ const PortfolioDetailPage = ({ items }) => {
                   <button
                     key={`dot-${idx}`}
                     type="button"
+                    data-carousel-dot
                     onClick={() => setActiveIndex(idx)}
                     style={{
                       width: 10,
@@ -1485,6 +1488,17 @@ const App = () => {
         button {
           font-size: 20px !important;
           padding: 12px 0 !important;
+        }
+        [data-carousel-button] {
+          font-size: 14px !important;
+          padding: 6px 8px !important;
+          line-height: 1 !important;
+        }
+        [data-carousel-dot] {
+          width: 8px !important;
+          height: 8px !important;
+          padding: 0 !important;
+          border-width: 1px !important;
         }
         ul {
           padding-left: 0 !important;

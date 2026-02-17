@@ -130,7 +130,7 @@ const STRIPE_TAX_CODE = process.env.STRIPE_TAX_CODE || '';
 
 export default async function handler(req, res) {
   const url = new URL(req.url, 'http://localhost');
-  const pathname = url.pathname;
+  const pathname = url.pathname?.startsWith('/api') ? url.pathname : `/api${url.pathname?.startsWith('/') ? '' : '/'}${url.pathname || ''}`;
   const parts = pathname.split('/').filter(Boolean); // e.g. ['api','projects',...]
 
   if (req.method === 'OPTIONS') {
@@ -597,4 +597,3 @@ export default async function handler(req, res) {
 
   json(res, 404, { error: 'Not found' });
 }
-

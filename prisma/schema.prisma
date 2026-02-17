@@ -72,6 +72,7 @@ model PortfolioItem {
   location    String?
   renderTime  String?  @map("render_time")
   imageUrl    String?  @map("image_url")
+  images      Json     @default(dbgenerated("'[]'::jsonb"))
   brief       String?
   scope       String?
   deliverables Json    @default(dbgenerated("'[]'::jsonb"))

@@ -196,13 +196,16 @@ const PortfolioEditor = () => {
       timeline: [],
       deliverablesText: '',
       toolsText: '',
-      timelineText: ''
+      timelineText: '',
+      imagesText: ''
     });
   };
 
   const save = async () => {
     if (!editing) return;
     setError('');
+    const images = parseList(editing.imagesText);
+    const coverImage = (editing.image_url || '').trim() || (images[0] || null);
     const row = {
       id: editing.id,
       published: !!editing.published,
@@ -212,7 +215,8 @@ const PortfolioEditor = () => {
       tag: (editing.tag || '').trim() || null,
       location: (editing.location || '').trim() || null,
       render_time: (editing.render_time || '').trim() || null,
-      image_url: (editing.image_url || '').trim() || null,
+      image_url: coverImage,
+      images,
       brief: (editing.brief || '').trim() || null,
       scope: (editing.scope || '').trim() || null,
       deliverables: parseList(editing.deliverablesText),
@@ -259,35 +263,50 @@ const PortfolioEditor = () => {
     await load();
   };
 
-  const uploadImage = async (file) => {
-    if (!file) return;
+  const uploadImages = async (files) => {
+    const uploads = Array.isArray(files) ? files.filter(Boolean) : [];
+    if (uploads.length === 0) return;
     setUploading(true);
     setError('');
     try {
       if (!supabase) {
         throw new Error(supabaseError || 'Supabase browser client is not configured.');
       }
-      const signRes = await fetch('/api/admin/site-media/sign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ originalName: file.name })
-      });
-      const signData = await signRes.json().catch(() => ({}));
-      if (!signRes.ok) {
-        throw new Error(signData?.error || `Failed to prepare upload (${signRes.status})`);
+      const uploadedUrls = [];
+      for (const file of uploads) {
+        const signRes = await fetch('/api/admin/site-media/sign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ originalName: file.name })
+        });
+        const signData = await signRes.json().catch(() => ({}));
+        if (!signRes.ok) {
+          throw new Error(signData?.error || `Failed to prepare upload (${signRes.status})`);
+        }
+
+        const upload = signData.upload;
+        const { data, error } = await supabase.storage
+          .from(upload.bucket)
+          .uploadToSignedUrl(upload.path, upload.token, file, { contentType: file.type || 'application/octet-stream' });
+        if (error) {
+          throw new Error(error.message);
+        }
+        const publicPath = data?.path || upload.path;
+        const { data: urlData } = supabase.storage.from(upload.bucket).getPublicUrl(publicPath);
+        const url = urlData?.publicUrl;
+        if (url) uploadedUrls.push(url);
       }
 
-      const upload = signData.upload;
-      const { data, error } = await supabase.storage
-        .from(upload.bucket)
-        .uploadToSignedUrl(upload.path, upload.token, file, { contentType: file.type || 'application/octet-stream' });
-      if (error) {
-        throw new Error(error.message);
+      if (uploadedUrls.length > 0) {
+        setEditing((prev) => {
+          if (!prev) return prev;
+          const existing = parseList(prev.imagesText || '');
+          const merged = [...existing, ...uploadedUrls].filter(Boolean);
+          const imagesText = merged.join('\n');
+          const cover = (prev.image_url || '').trim() || merged[0] || '';
+          return { ...prev, imagesText, image_url: cover };
+        });
       }
-      const publicPath = data?.path || upload.path;
-      const { data: urlData } = supabase.storage.from(upload.bucket).getPublicUrl(publicPath);
-      const url = urlData?.publicUrl;
-      setEditing((prev) => (prev ? { ...prev, image_url: url } : prev));
     } catch (e) {
       setError(e?.message || 'Upload failed');
     } finally {
@@ -395,7 +414,7 @@ const PortfolioEditor = () => {
                   type="file"
                   accept="image/*"
                   style={{ display: 'none' }}
-                  onChange={(e) => uploadImage(e.target.files?.[0])}
+                  onChange={(e) => uploadImages([...(e.target.files || [])])}
                   disabled={uploading}
                 />
                 {uploading ? 'Uploading…' : 'Upload'}
@@ -411,6 +430,47 @@ const PortfolioEditor = () => {
                     backgroundPosition: 'center'
                   }}
                 />
+              </div>
+            ) : null}
+          </div>
+
+          <div style={{ marginTop: 18 }}>
+            <div style={labelStyle}>Gallery Images (Carousel)</div>
+            <textarea
+              value={editing.imagesText || ''}
+              onChange={(e) => setEditing({ ...editing, imagesText: e.target.value })}
+              placeholder={'https://...\nhttps://...'}
+              rows={4}
+              style={{
+                width: '100%',
+                border: '2px solid #000000',
+                padding: 12,
+                fontSize: 14,
+                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+                background: 'transparent',
+                outline: 'none',
+                resize: 'vertical'
+              }}
+            />
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+              <label style={{ ...secondaryButtonStyle, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={(e) => uploadImages([...(e.target.files || [])])}
+                  disabled={uploading}
+                />
+                {uploading ? 'Uploading…' : 'Upload Gallery'}
+              </label>
+              <span style={{ fontSize: 12, opacity: 0.6 }}>One URL per line. Used for the carousel.</span>
+            </div>
+            {parseList(editing.imagesText || '').length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10, marginTop: 12 }}>
+                {parseList(editing.imagesText || '').map((url) => (
+                  <div key={url} style={{ border: '1px solid #000000', aspectRatio: '4/3', backgroundImage: `url('${url}')`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                ))}
               </div>
             ) : null}
           </div>
@@ -505,7 +565,8 @@ const PortfolioEditor = () => {
                     ...item,
                     deliverablesText: listToText(item.deliverables),
                     toolsText: listToText(item.tools),
-                    timelineText: timelineToText(item.timeline)
+                    timelineText: timelineToText(item.timeline),
+                    imagesText: listToText(Array.isArray(item.images) && item.images.length > 0 ? item.images : (item.image_url ? [item.image_url] : []))
                   })
                 }
               >

@@ -233,6 +233,7 @@ export default async function handler(req, res) {
         location: (row.location || '').trim() || null,
         render_time: (row.render_time || '').trim() || null,
         image_url: (row.image_url || '').trim() || null,
+        images: Array.isArray(row.images) ? row.images : [],
         brief: (row.brief || '').trim() || null,
         scope: (row.scope || '').trim() || null,
         deliverables: Array.isArray(row.deliverables) ? row.deliverables : [],

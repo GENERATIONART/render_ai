@@ -75,6 +75,7 @@ create table if not exists public.portfolio_items (
   location text,
   render_time text,
   image_url text,
+  images jsonb not null default '[]'::jsonb,
   brief text,
   scope text,
   deliverables jsonb not null default '[]'::jsonb,

@@ -932,6 +932,14 @@ const PortfolioDetailPage = ({ items }) => {
   const navigate = useNavigate();
   const { slug } = useParams();
   const item = items.find((entry) => entry.slug === slug);
+  const images = Array.isArray(item?.images) && item.images.length > 0
+    ? item.images
+    : (item?.image ? [item.image] : []);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [slug]);
 
   if (!item) {
     return (
@@ -989,11 +997,76 @@ const PortfolioDetailPage = ({ items }) => {
           backgroundColor: '#E0E0E0',
           width: '100%',
           position: 'relative',
-          overflow: 'hidden',
-          backgroundImage: `url('${item.image}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}></div>
+          overflow: 'hidden'
+        }}>
+          {images.length > 0 ? (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: `url('${images[Math.min(activeIndex, images.length - 1)]}')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                transition: 'opacity 0.2s ease'
+              }}
+            />
+          ) : null}
+          {images.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setActiveIndex((prev) => (prev - 1 + images.length) % images.length)}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: 12,
+                  transform: 'translateY(-50%)',
+                  border: '2px solid #000000',
+                  background: 'rgba(255,255,255,0.8)',
+                  padding: '10px 14px',
+                  cursor: 'pointer',
+                  fontSize: 16
+                }}
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveIndex((prev) => (prev + 1) % images.length)}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: 12,
+                  transform: 'translateY(-50%)',
+                  border: '2px solid #000000',
+                  background: 'rgba(255,255,255,0.8)',
+                  padding: '10px 14px',
+                  cursor: 'pointer',
+                  fontSize: 16
+                }}
+              >
+                →
+              </button>
+              <div style={{ position: 'absolute', left: '50%', bottom: 12, transform: 'translateX(-50%)', display: 'flex', gap: 8 }}>
+                {images.map((_, idx) => (
+                  <button
+                    key={`dot-${idx}`}
+                    type="button"
+                    onClick={() => setActiveIndex(idx)}
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      border: '1px solid #000000',
+                      background: idx === activeIndex ? '#000000' : 'rgba(255,255,255,0.8)',
+                      cursor: 'pointer'
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
 
         <div style={{ marginTop: '40px' }}>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '16px' }}>
@@ -1477,10 +1550,10 @@ const App = () => {
           const supabase = getSupabaseBrowser();
           const { data, error } = await supabase
             .from('portfolio_items')
-            .select('slug,title,tag,location,render_time,image_url,brief,scope,deliverables,tools,timeline')
-            .eq('published', true)
-            .order('sort_order', { ascending: true })
-            .order('created_at', { ascending: false });
+                .select('slug,title,tag,location,render_time,image_url,images,brief,scope,deliverables,tools,timeline')
+                .eq('published', true)
+                .order('sort_order', { ascending: true })
+                .order('created_at', { ascending: false });
           if (!error && Array.isArray(data) && data.length > 0) {
             const mapped = data.map((row) => ({
               slug: row.slug,
@@ -1488,7 +1561,8 @@ const App = () => {
               tag: row.tag,
               location: row.location,
               renderTime: row.render_time,
-              image: row.image_url,
+              images: Array.isArray(row.images) ? row.images : [],
+              image: row.image_url || (Array.isArray(row.images) && row.images.length > 0 ? row.images[0] : null),
               brief: row.brief,
               scope: row.scope,
               deliverables: Array.isArray(row.deliverables) ? row.deliverables : [],
@@ -1508,7 +1582,15 @@ const App = () => {
         }
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
-          setPortfolioItems(data);
+          const normalized = data.map((item) => {
+            const images = Array.isArray(item.images) ? item.images : [];
+            return {
+              ...item,
+              images,
+              image: item.image || (images.length > 0 ? images[0] : item.image)
+            };
+          });
+          setPortfolioItems(normalized);
         }
       } catch (error) {
         console.error('Failed to load portfolio.json', error);

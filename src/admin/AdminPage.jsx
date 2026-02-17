@@ -58,106 +58,88 @@ const Section = ({ title, subtitle, children, right }) => (
   </section>
 );
 
-const JsonListEditor = ({ label, value, onChange, placeholder }) => {
-  const toText = (val) => (Array.isArray(val) ? val.map((item) => String(item ?? '')).join('\n') : '');
-  const [textValue, setTextValue] = useState(() => toText(value));
+const JsonListEditor = ({ label, value, onChange, placeholder }) => (
+  <div style={{ marginTop: 16 }}>
+    <div style={labelStyle}>{label}</div>
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={4}
+      style={{
+        width: '100%',
+        border: '2px solid #000000',
+        padding: 12,
+        fontSize: 14,
+        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+        background: 'transparent',
+        outline: 'none',
+        resize: 'vertical'
+      }}
+    />
+    <div style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>One per line.</div>
+  </div>
+);
 
-  useEffect(() => {
-    setTextValue(toText(value));
-  }, [value]);
+const TimelineEditor = ({ value, onChange }) => (
+  <div style={{ marginTop: 16 }}>
+    <div style={labelStyle}>Timeline</div>
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={'Step 1 title | step 1 description\nStep 2 title | step 2 description'}
+      rows={5}
+      style={{
+        width: '100%',
+        border: '2px solid #000000',
+        padding: 12,
+        fontSize: 14,
+        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+        background: 'transparent',
+        outline: 'none',
+        resize: 'vertical'
+      }}
+    />
+    <div style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>Format: `title | description` (one per line).</div>
+  </div>
+);
 
-  return (
-    <div style={{ marginTop: 16 }}>
-      <div style={labelStyle}>{label}</div>
-      <textarea
-        value={textValue}
-        onChange={(e) => {
-          const next = e.target.value;
-          setTextValue(next);
-          const parsed = next
-            .split('\n')
-            .map((s) => s.trim())
-            .filter((s) => s.length > 0);
-          onChange(parsed);
-        }}
-        placeholder={placeholder}
-        rows={4}
-        style={{
-          width: '100%',
-          border: '2px solid #000000',
-          padding: 12,
-          fontSize: 14,
-          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-          background: 'transparent',
-          outline: 'none',
-          resize: 'vertical'
-        }}
-      />
-      <div style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>One per line.</div>
-    </div>
-  );
+const listToText = (value) => (Array.isArray(value) ? value.map((item) => String(item ?? '')).join('\n') : '');
+
+const timelineToText = (value) => {
+  if (!Array.isArray(value)) return '';
+  return value
+    .map((step) => {
+      const title = String(step?.title || '').trim();
+      const description = String(step?.description || '').trim();
+      if (title && description) return `${title} | ${description}`;
+      if (title) return title;
+      if (description) return `| ${description}`;
+      return '';
+    })
+    .filter((line) => line.length > 0)
+    .join('\n');
 };
 
-const TimelineEditor = ({ value, onChange }) => {
-  const toText = (val) => {
-    if (!Array.isArray(val)) return '';
-    return val
-      .map((step) => {
-        const title = String(step?.title || '').trim();
-        const description = String(step?.description || '').trim();
-        if (title && description) return `${title} | ${description}`;
-        if (title) return title;
-        if (description) return `| ${description}`;
-        return '';
-      })
-      .filter((line) => line.length > 0)
-      .join('\n');
-  };
-  const [textValue, setTextValue] = useState(() => toText(value));
+const parseList = (text) =>
+  String(text || '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 
-  useEffect(() => {
-    setTextValue(toText(value));
-  }, [value]);
-
-  return (
-    <div style={{ marginTop: 16 }}>
-      <div style={labelStyle}>Timeline</div>
-      <textarea
-        value={textValue}
-        onChange={(e) => {
-          const next = e.target.value;
-          setTextValue(next);
-          const rows = next
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line.length > 0)
-            .map((line) => {
-              if (!line.includes('|')) {
-                return { title: line.trim(), description: '' };
-              }
-              const [title, ...rest] = line.split('|');
-              return { title: (title || '').trim(), description: rest.join('|').trim() };
-            })
-            .filter((s) => s.title || s.description);
-          onChange(rows);
-        }}
-        placeholder={'Step 1 title | step 1 description\nStep 2 title | step 2 description'}
-        rows={5}
-        style={{
-          width: '100%',
-          border: '2px solid #000000',
-          padding: 12,
-          fontSize: 14,
-          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-          background: 'transparent',
-          outline: 'none',
-          resize: 'vertical'
-        }}
-      />
-      <div style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>Format: `title | description` (one per line).</div>
-    </div>
-  );
-};
+const parseTimeline = (text) =>
+  String(text || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      if (!line.includes('|')) {
+        return { title: line.trim(), description: '' };
+      }
+      const [title, ...rest] = line.split('|');
+      return { title: (title || '').trim(), description: rest.join('|').trim() };
+    })
+    .filter((s) => s.title || s.description);
 
 const createSupabaseBrowserSafe = () => {
   try {
@@ -211,7 +193,10 @@ const PortfolioEditor = () => {
       scope: '',
       deliverables: [],
       tools: [],
-      timeline: []
+      timeline: [],
+      deliverablesText: '',
+      toolsText: '',
+      timelineText: ''
     });
   };
 
@@ -230,9 +215,9 @@ const PortfolioEditor = () => {
       image_url: (editing.image_url || '').trim() || null,
       brief: (editing.brief || '').trim() || null,
       scope: (editing.scope || '').trim() || null,
-      deliverables: Array.isArray(editing.deliverables) ? editing.deliverables : [],
-      tools: Array.isArray(editing.tools) ? editing.tools : [],
-      timeline: Array.isArray(editing.timeline) ? editing.timeline : [],
+      deliverables: parseList(editing.deliverablesText),
+      tools: parseList(editing.toolsText),
+      timeline: parseTimeline(editing.timelineText),
       updated_at: new Date().toISOString()
     };
     if (!row.slug || !row.title) {
@@ -470,17 +455,20 @@ const PortfolioEditor = () => {
 
           <JsonListEditor
             label="Deliverables"
-            value={editing.deliverables}
-            onChange={(deliverables) => setEditing({ ...editing, deliverables })}
+            value={editing.deliverablesText || ''}
+            onChange={(deliverablesText) => setEditing({ ...editing, deliverablesText })}
             placeholder={'Hero render (4K)\nTwilight variant\nMaterial pass'}
           />
           <JsonListEditor
             label="Tools"
-            value={editing.tools}
-            onChange={(tools) => setEditing({ ...editing, tools })}
+            value={editing.toolsText || ''}
+            onChange={(toolsText) => setEditing({ ...editing, toolsText })}
             placeholder={'Rhino\nV-Ray\nPhotoshop'}
           />
-          <TimelineEditor value={editing.timeline} onChange={(timeline) => setEditing({ ...editing, timeline })} />
+          <TimelineEditor
+            value={editing.timelineText || ''}
+            onChange={(timelineText) => setEditing({ ...editing, timelineText })}
+          />
         </div>
       ) : null}
 
@@ -509,7 +497,18 @@ const PortfolioEditor = () => {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <button type="button" style={secondaryButtonStyle} onClick={() => setEditing(item)}>
+              <button
+                type="button"
+                style={secondaryButtonStyle}
+                onClick={() =>
+                  setEditing({
+                    ...item,
+                    deliverablesText: listToText(item.deliverables),
+                    toolsText: listToText(item.tools),
+                    timelineText: timelineToText(item.timeline)
+                  })
+                }
+              >
                 Edit
               </button>
               <button type="button" style={{ ...secondaryButtonStyle, borderColor: '#FF4500', color: '#FF4500' }} onClick={() => remove(item.id)}>

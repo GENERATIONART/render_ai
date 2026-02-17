@@ -238,7 +238,7 @@ const Footer = () => (
   </footer>
 );
 
-const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline }) => {
+const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadline, contactSubheadline }) => {
   const navigate = useNavigate();
 
   const handleFormSubmit = (e) => {
@@ -272,9 +272,16 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline }) => {
         <ServiceRow price="950" title="Commercial Aerial" tag="Campus View" onClick={() => navigate('/commercial-aerial')} />
       </section>
 
-      <section id="contact" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <h2 style={{ fontWeight: 900, fontSize: '32px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>PROJECT / INQUIRY</h2>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
+	      <section id="contact" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
+	        <h2 style={{ fontWeight: 900, fontSize: '32px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
+            {contactHeadline || 'PROJECT / INQUIRY'}
+          </h2>
+          {contactSubheadline ? (
+            <p style={{ fontSize: '16px', opacity: 0.7, marginTop: 0, marginBottom: '20px' }}>
+              {contactSubheadline}
+            </p>
+          ) : null}
+	        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
 
 	        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: '40px' }}>
 	          <div style={{ position: 'relative' }}>
@@ -397,8 +404,42 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline }) => {
   );
 };
 
-const AboutPage = () => {
+const AboutPage = ({ aboutHeadline, aboutHighlight, aboutBody, aboutSectors, aboutCapabilities }) => {
   const navigate = useNavigate();
+  const defaultParagraphs = [
+    'We are a multidisciplinary team of architects, interior designers, and technologists with extensive experience creating high-fidelity 3D visualizations for leading design firms, real estate developers, and cultural institutions worldwide.',
+    "After years working with major agencies, we recognized a gap: exceptional architectural visualization remained inaccessible to emerging designers, independent practices, and smaller studios who couldn't justify the traditional cost and turnaround time.",
+    'So we built a streamlined process—combining deep technical expertise with efficient workflows—to deliver photorealistic presentation imagery at a fraction of the industry standard. Our mission is to democratize access to world-class visualization, empowering a broader community of design enthusiasts to communicate their vision with clarity and impact.',
+    "Whether you're pitching to clients, submitting for permits, or building your portfolio, we're here to make professional-grade rendering fast, affordable, and straightforward."
+  ];
+  const paragraphText = (aboutBody && aboutBody.trim().length > 0)
+    ? aboutBody
+    : defaultParagraphs.join('\n\n');
+  const paragraphs = paragraphText
+    .split(/\n\s*\n/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const splitLines = (text) =>
+    String(text || '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+  const defaultSectors = [
+    'Residential Architecture',
+    'Commercial Real Estate',
+    'Interior Design Studios',
+    'Urban Development',
+    'Hospitality & Retail'
+  ];
+  const defaultCapabilities = [
+    'Photorealistic Rendering',
+    'Material & Lighting Simulation',
+    'Site Context Integration',
+    'Entourage & Atmosphere',
+    'Rapid Turnaround Workflow'
+  ];
+  const sectors = splitLines(aboutSectors);
+  const capabilities = splitLines(aboutCapabilities);
 
   return (
     <>
@@ -422,23 +463,22 @@ const AboutPage = () => {
       <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
         <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
         <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
-          Who We Are / <span style={{ color: '#FF4500' }}>About</span>
+          {(aboutHeadline || 'Who We Are /').trim()} <span style={{ color: '#FF4500' }}>{aboutHighlight || 'About'}</span>
         </h2>
         <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '40px', border: 'none' }} />
         
         <div style={{ fontSize: '20px', lineHeight: 1.7, marginBottom: '60px' }}>
-          <p style={{ marginBottom: '32px' }}>
-            We are a multidisciplinary team of architects, interior designers, and technologists with extensive experience creating high-fidelity 3D visualizations for leading design firms, real estate developers, and cultural institutions worldwide.
-          </p>
-          <p style={{ marginBottom: '32px' }}>
-            After years working with major agencies, we recognized a gap: exceptional architectural visualization remained inaccessible to emerging designers, independent practices, and smaller studios who couldn't justify the traditional cost and turnaround time.
-          </p>
-          <p style={{ marginBottom: '32px' }}>
-            So we built a streamlined process—combining deep technical expertise with efficient workflows—to deliver photorealistic presentation imagery at a fraction of the industry standard. Our mission is to democratize access to world-class visualization, empowering a broader community of design enthusiasts to communicate their vision with clarity and impact.
-          </p>
-          <p style={{ opacity: 0.7 }}>
-            Whether you're pitching to clients, submitting for permits, or building your portfolio, we're here to make professional-grade rendering fast, affordable, and straightforward.
-          </p>
+          {paragraphs.map((paragraph, index) => (
+            <p
+              key={`${index}-${paragraph.slice(0, 12)}`}
+              style={{
+                marginBottom: index === paragraphs.length - 1 ? 0 : '32px',
+                opacity: index === paragraphs.length - 1 ? 0.7 : 1
+              }}
+            >
+              {paragraph}
+            </p>
+          ))}
         </div>
 
         <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '60px 0 40px 0', border: 'none' }} />
@@ -448,21 +488,17 @@ const AboutPage = () => {
           <div>
             <h4 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em', color: '#FF4500' }}>Sectors</h4>
             <ul style={{ listStyle: 'none', fontSize: '16px', lineHeight: 2 }}>
-              <li>• Residential Architecture</li>
-              <li>• Commercial Real Estate</li>
-              <li>• Interior Design Studios</li>
-              <li>• Urban Development</li>
-              <li>• Hospitality & Retail</li>
+              {(sectors.length > 0 ? sectors : defaultSectors).map((item) => (
+                <li key={item}>• {item}</li>
+              ))}
             </ul>
           </div>
           <div>
             <h4 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em', color: '#FF4500' }}>Capabilities</h4>
             <ul style={{ listStyle: 'none', fontSize: '16px', lineHeight: 2 }}>
-              <li>• Photorealistic Rendering</li>
-              <li>• Material & Lighting Simulation</li>
-              <li>• Site Context Integration</li>
-              <li>• Entourage & Atmosphere</li>
-              <li>• Rapid Turnaround Workflow</li>
+              {(capabilities.length > 0 ? capabilities : defaultCapabilities).map((item) => (
+                <li key={item}>• {item}</li>
+              ))}
             </ul>
           </div>
         </div>
@@ -1489,7 +1525,17 @@ const App = () => {
         const { data, error } = await supabase
           .from('site_copy')
           .select('key,value')
-          .in('key', ['home.hero_headline', 'home.hero_subheadline']);
+          .in('key', [
+            'home.hero_headline',
+            'home.hero_subheadline',
+            'about.headline',
+            'about.highlight',
+            'about.body',
+            'about.sectors',
+            'about.capabilities',
+            'contact.headline',
+            'contact.subheadline'
+          ]);
         if (error) {
           return;
         }
@@ -1521,11 +1567,24 @@ const App = () => {
                       portfolioItems={portfolioItems}
                       heroHeadline={siteCopy['home.hero_headline']}
                       heroSubheadline={siteCopy['home.hero_subheadline']}
+                      contactHeadline={siteCopy['contact.headline']}
+                      contactSubheadline={siteCopy['contact.subheadline']}
                     />
                   }
                 />
                 <Route path="/admin" element={<AdminPage />} />
-                <Route path="/about" element={<AboutPage />} />
+                <Route
+                  path="/about"
+                  element={
+                    <AboutPage
+                      aboutHeadline={siteCopy['about.headline']}
+                      aboutHighlight={siteCopy['about.highlight']}
+                      aboutBody={siteCopy['about.body']}
+                      aboutSectors={siteCopy['about.sectors']}
+                      aboutCapabilities={siteCopy['about.capabilities']}
+                    />
+                  }
+                />
                 <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
                 <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
                 <Route path="/residential-exterior" element={

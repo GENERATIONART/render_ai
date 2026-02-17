@@ -565,7 +565,7 @@ const PortfolioPage = ({ items }) => {
                   to={`/portfolio/${item.slug}`}
                   style={{ textDecoration: 'none', color: 'inherit' }}
                 >
-                  <div style={{ fontSize: '16px', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6 }}>
+                  <div data-portfolio-cta style={{ fontSize: '16px', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6 }}>
                     VIEW PROJECT <span>→</span>
                   </div>
                 </Link>
@@ -1509,9 +1509,18 @@ const App = () => {
         [data-app] [style*="gridTemplateColumns: '1fr 1fr'"] {
           grid-template-columns: 1fr !important;
         }
+        [data-app] [style*="gridTemplateColumns: '1fr auto'"] {
+          grid-template-columns: 1fr !important;
+          gap: 12px !important;
+        }
         [data-app] [style*="gridTemplateColumns: '100px 1fr auto'"] {
           grid-template-columns: 70px 1fr auto !important;
           gap: 12px !important;
+        }
+        [data-portfolio-cta] {
+          justify-content: flex-start !important;
+          text-align: left !important;
+          white-space: normal !important;
         }
         [data-service-row] {
           padding: 26px 0 !important;

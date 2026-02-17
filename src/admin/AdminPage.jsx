@@ -525,13 +525,6 @@ const PortfolioEditor = () => {
 const SiteCopyEditor = () => {
   const [heroHeadline, setHeroHeadline] = useState('');
   const [heroSubheadline, setHeroSubheadline] = useState('');
-  const [aboutHeadline, setAboutHeadline] = useState('');
-  const [aboutHighlight, setAboutHighlight] = useState('');
-  const [aboutBody, setAboutBody] = useState('');
-  const [aboutSectors, setAboutSectors] = useState('');
-  const [aboutCapabilities, setAboutCapabilities] = useState('');
-  const [contactHeadline, setContactHeadline] = useState('');
-  const [contactSubheadline, setContactSubheadline] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -539,7 +532,7 @@ const SiteCopyEditor = () => {
   const load = async () => {
     setError('');
     try {
-      const res = await fetch('/api/admin/site-copy?keys=home.hero_headline,home.hero_subheadline,about.headline,about.highlight,about.body,about.sectors,about.capabilities,contact.headline,contact.subheadline');
+      const res = await fetch('/api/admin/site-copy?keys=home.hero_headline,home.hero_subheadline');
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data?.error || `Failed to load (${res.status})`);
@@ -547,13 +540,6 @@ const SiteCopyEditor = () => {
       const map = new Map((data.rows || []).map((row) => [row.key, row.value]));
       setHeroHeadline(map.get('home.hero_headline') || '');
       setHeroSubheadline(map.get('home.hero_subheadline') || '');
-      setAboutHeadline(map.get('about.headline') || '');
-      setAboutHighlight(map.get('about.highlight') || '');
-      setAboutBody(map.get('about.body') || '');
-      setAboutSectors(map.get('about.sectors') || '');
-      setAboutCapabilities(map.get('about.capabilities') || '');
-      setContactHeadline(map.get('contact.headline') || '');
-      setContactSubheadline(map.get('contact.subheadline') || '');
     } catch (e) {
       setError(e?.message || 'Failed to load');
     }
@@ -569,14 +555,7 @@ const SiteCopyEditor = () => {
     setSaved(false);
     const rows = [
       { key: 'home.hero_headline', value: heroHeadline || '' },
-      { key: 'home.hero_subheadline', value: heroSubheadline || '' },
-      { key: 'about.headline', value: aboutHeadline || '' },
-      { key: 'about.highlight', value: aboutHighlight || '' },
-      { key: 'about.body', value: aboutBody || '' },
-      { key: 'about.sectors', value: aboutSectors || '' },
-      { key: 'about.capabilities', value: aboutCapabilities || '' },
-      { key: 'contact.headline', value: contactHeadline || '' },
-      { key: 'contact.subheadline', value: contactSubheadline || '' }
+      { key: 'home.hero_subheadline', value: heroSubheadline || '' }
     ];
     try {
       const res = await fetch('/api/admin/site-copy', {
@@ -638,119 +617,157 @@ const SiteCopyEditor = () => {
           }}
         />
       </div>
-      <div style={{ marginTop: 28 }}>
-        <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800, opacity: 0.7 }}>
-          About Page
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>About headline</div>
-          <input
-            value={aboutHeadline}
-            onChange={(e) => setAboutHeadline(e.target.value)}
-            placeholder="Who We Are /"
-            style={inputStyle}
-          />
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>About highlight</div>
-          <input
-            value={aboutHighlight}
-            onChange={(e) => setAboutHighlight(e.target.value)}
-            placeholder="About"
-            style={inputStyle}
-          />
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>About body (paragraphs)</div>
-          <textarea
-            value={aboutBody}
-            onChange={(e) => setAboutBody(e.target.value)}
-            rows={6}
-            placeholder={'Paragraph one...\n\nParagraph two...'}
-            style={{
-              width: '100%',
-              border: '2px solid #000000',
-              padding: 12,
-              fontSize: 16,
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              background: 'transparent',
-              outline: 'none',
-              resize: 'vertical'
-            }}
-          />
-          <div style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>Use a blank line between paragraphs.</div>
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>Sectors (one per line)</div>
-          <textarea
-            value={aboutSectors}
-            onChange={(e) => setAboutSectors(e.target.value)}
-            rows={4}
-            placeholder={'Residential Architecture\nCommercial Real Estate\nInterior Design Studios'}
-            style={{
-              width: '100%',
-              border: '2px solid #000000',
-              padding: 12,
-              fontSize: 16,
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              background: 'transparent',
-              outline: 'none',
-              resize: 'vertical'
-            }}
-          />
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>Capabilities (one per line)</div>
-          <textarea
-            value={aboutCapabilities}
-            onChange={(e) => setAboutCapabilities(e.target.value)}
-            rows={4}
-            placeholder={'Photorealistic Rendering\nMaterial & Lighting Simulation\nSite Context Integration'}
-            style={{
-              width: '100%',
-              border: '2px solid #000000',
-              padding: 12,
-              fontSize: 16,
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              background: 'transparent',
-              outline: 'none',
-              resize: 'vertical'
-            }}
-          />
-        </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 18 }}>
+        <button type="button" style={buttonStyle} onClick={save} disabled={saving}>
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        {saved ? <span style={{ fontSize: 14, opacity: 0.7 }}>Saved.</span> : null}
       </div>
-      <div style={{ marginTop: 28 }}>
-        <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800, opacity: 0.7 }}>
-          Contact Section
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>Contact headline</div>
-          <input
-            value={contactHeadline}
-            onChange={(e) => setContactHeadline(e.target.value)}
-            placeholder="PROJECT / INQUIRY"
-            style={inputStyle}
-          />
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <div style={labelStyle}>Contact subheadline</div>
-          <textarea
-            value={contactSubheadline}
-            onChange={(e) => setContactSubheadline(e.target.value)}
-            rows={2}
-            placeholder="Short line under the headline (optional)"
-            style={{
-              width: '100%',
-              border: '2px solid #000000',
-              padding: 12,
-              fontSize: 16,
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              background: 'transparent',
-              outline: 'none',
-              resize: 'vertical'
-            }}
-          />
-        </div>
+    </div>
+  );
+};
+
+const AboutEditor = () => {
+  const [aboutHeadline, setAboutHeadline] = useState('');
+  const [aboutHighlight, setAboutHighlight] = useState('');
+  const [aboutBody, setAboutBody] = useState('');
+  const [aboutSectors, setAboutSectors] = useState('');
+  const [aboutCapabilities, setAboutCapabilities] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const load = async () => {
+    setError('');
+    try {
+      const res = await fetch('/api/admin/site-copy?keys=about.headline,about.highlight,about.body,about.sectors,about.capabilities');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to load (${res.status})`);
+      }
+      const map = new Map((data.rows || []).map((row) => [row.key, row.value]));
+      setAboutHeadline(map.get('about.headline') || '');
+      setAboutHighlight(map.get('about.highlight') || '');
+      setAboutBody(map.get('about.body') || '');
+      setAboutSectors(map.get('about.sectors') || '');
+      setAboutCapabilities(map.get('about.capabilities') || '');
+    } catch (e) {
+      setError(e?.message || 'Failed to load');
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    const rows = [
+      { key: 'about.headline', value: aboutHeadline || '' },
+      { key: 'about.highlight', value: aboutHighlight || '' },
+      { key: 'about.body', value: aboutBody || '' },
+      { key: 'about.sectors', value: aboutSectors || '' },
+      { key: 'about.capabilities', value: aboutCapabilities || '' }
+    ];
+    try {
+      const res = await fetch('/api/admin/site-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || `Save failed (${res.status})`);
+      }
+    } catch (e) {
+      setError(e?.message || 'Save failed');
+      setSaving(false);
+      return;
+    }
+    setSaved(true);
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 900 }}>
+      {!!error && <p style={{ color: '#FF4500', marginTop: 16 }}>{error}</p>}
+      <div style={{ marginTop: 6 }}>
+        <div style={labelStyle}>About headline</div>
+        <input
+          value={aboutHeadline}
+          onChange={(e) => setAboutHeadline(e.target.value)}
+          placeholder="Who We Are /"
+          style={inputStyle}
+        />
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <div style={labelStyle}>About highlight</div>
+        <input
+          value={aboutHighlight}
+          onChange={(e) => setAboutHighlight(e.target.value)}
+          placeholder="About"
+          style={inputStyle}
+        />
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <div style={labelStyle}>About body (paragraphs)</div>
+        <textarea
+          value={aboutBody}
+          onChange={(e) => setAboutBody(e.target.value)}
+          rows={6}
+          placeholder={'Paragraph one...\n\nParagraph two...'}
+          style={{
+            width: '100%',
+            border: '2px solid #000000',
+            padding: 12,
+            fontSize: 16,
+            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+            background: 'transparent',
+            outline: 'none',
+            resize: 'vertical'
+          }}
+        />
+        <div style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>Use a blank line between paragraphs.</div>
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <div style={labelStyle}>Sectors (one per line)</div>
+        <textarea
+          value={aboutSectors}
+          onChange={(e) => setAboutSectors(e.target.value)}
+          rows={4}
+          placeholder={'Residential Architecture\nCommercial Real Estate\nInterior Design Studios'}
+          style={{
+            width: '100%',
+            border: '2px solid #000000',
+            padding: 12,
+            fontSize: 16,
+            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+            background: 'transparent',
+            outline: 'none',
+            resize: 'vertical'
+          }}
+        />
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <div style={labelStyle}>Capabilities (one per line)</div>
+        <textarea
+          value={aboutCapabilities}
+          onChange={(e) => setAboutCapabilities(e.target.value)}
+          rows={4}
+          placeholder={'Photorealistic Rendering\nMaterial & Lighting Simulation\nSite Context Integration'}
+          style={{
+            width: '100%',
+            border: '2px solid #000000',
+            padding: 12,
+            fontSize: 16,
+            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+            background: 'transparent',
+            outline: 'none',
+            resize: 'vertical'
+          }}
+        />
       </div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 18 }}>
         <button type="button" style={buttonStyle} onClick={save} disabled={saving}>
@@ -762,6 +779,100 @@ const SiteCopyEditor = () => {
   );
 };
 
+const ContactEditor = () => {
+  const [contactHeadline, setContactHeadline] = useState('');
+  const [contactSubheadline, setContactSubheadline] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const load = async () => {
+    setError('');
+    try {
+      const res = await fetch('/api/admin/site-copy?keys=contact.headline,contact.subheadline');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to load (${res.status})`);
+      }
+      const map = new Map((data.rows || []).map((row) => [row.key, row.value]));
+      setContactHeadline(map.get('contact.headline') || '');
+      setContactSubheadline(map.get('contact.subheadline') || '');
+    } catch (e) {
+      setError(e?.message || 'Failed to load');
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    const rows = [
+      { key: 'contact.headline', value: contactHeadline || '' },
+      { key: 'contact.subheadline', value: contactSubheadline || '' }
+    ];
+    try {
+      const res = await fetch('/api/admin/site-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || `Save failed (${res.status})`);
+      }
+    } catch (e) {
+      setError(e?.message || 'Save failed');
+      setSaving(false);
+      return;
+    }
+    setSaved(true);
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 900 }}>
+      {!!error && <p style={{ color: '#FF4500', marginTop: 16 }}>{error}</p>}
+      <div style={{ marginTop: 6 }}>
+        <div style={labelStyle}>Contact headline</div>
+        <input
+          value={contactHeadline}
+          onChange={(e) => setContactHeadline(e.target.value)}
+          placeholder="PROJECT / INQUIRY"
+          style={inputStyle}
+        />
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <div style={labelStyle}>Contact subheadline</div>
+        <textarea
+          value={contactSubheadline}
+          onChange={(e) => setContactSubheadline(e.target.value)}
+          rows={2}
+          placeholder="Short line under the headline (optional)"
+          style={{
+            width: '100%',
+            border: '2px solid #000000',
+            padding: 12,
+            fontSize: 16,
+            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+            background: 'transparent',
+            outline: 'none',
+            resize: 'vertical'
+          }}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 18 }}>
+        <button type="button" style={buttonStyle} onClick={save} disabled={saving}>
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        {saved ? <span style={{ fontSize: 14, opacity: 0.7 }}>Saved.</span> : null}
+      </div>
+    </div>
+  );
+};
 export const AdminPage = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [sessionEmail, setSessionEmail] = useState('');
@@ -882,7 +993,29 @@ export const AdminPage = () => {
               color: tab === 'copy' ? '#F4F4F4' : '#000000'
             }}
           >
-            Homepage Text
+            Home Copy
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('about')}
+            style={{
+              ...secondaryButtonStyle,
+              background: tab === 'about' ? '#000000' : 'transparent',
+              color: tab === 'about' ? '#F4F4F4' : '#000000'
+            }}
+          >
+            About
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('contact')}
+            style={{
+              ...secondaryButtonStyle,
+              background: tab === 'contact' ? '#000000' : 'transparent',
+              color: tab === 'contact' ? '#F4F4F4' : '#000000'
+            }}
+          >
+            Contact
           </button>
         </div>
       </Section>
@@ -894,8 +1027,20 @@ export const AdminPage = () => {
       ) : null}
 
       {tab === 'copy' ? (
-        <Section title="Homepage Text" subtitle="Edit homepage hero copy without redeploying.">
+        <Section title="Home Copy" subtitle="Edit homepage hero copy without redeploying.">
           <SiteCopyEditor />
+        </Section>
+      ) : null}
+
+      {tab === 'about' ? (
+        <Section title="About" subtitle="Edit the About page content.">
+          <AboutEditor />
+        </Section>
+      ) : null}
+
+      {tab === 'contact' ? (
+        <Section title="Contact" subtitle="Edit the contact section headline and subheadline.">
+          <ContactEditor />
         </Section>
       ) : null}
     </>

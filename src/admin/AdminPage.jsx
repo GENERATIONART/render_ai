@@ -59,11 +59,11 @@ const Section = ({ title, subtitle, children, right }) => (
 );
 
 const JsonListEditor = ({ label, value, onChange, placeholder }) => {
-  const textValue = useMemo(() => {
-    if (Array.isArray(value)) {
-      return value.join('\n');
-    }
-    return '';
+  const toText = (val) => (Array.isArray(val) ? val.map((item) => String(item ?? '')).join('\n') : '');
+  const [textValue, setTextValue] = useState(() => toText(value));
+
+  useEffect(() => {
+    setTextValue(toText(value));
   }, [value]);
 
   return (
@@ -71,7 +71,15 @@ const JsonListEditor = ({ label, value, onChange, placeholder }) => {
       <div style={labelStyle}>{label}</div>
       <textarea
         value={textValue}
-        onChange={(e) => onChange(e.target.value.split('\n').map((s) => s.trim()).filter(Boolean))}
+        onChange={(e) => {
+          const next = e.target.value;
+          setTextValue(next);
+          const parsed = next
+            .split('\n')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0);
+          onChange(parsed);
+        }}
         placeholder={placeholder}
         rows={4}
         style={{
@@ -91,14 +99,24 @@ const JsonListEditor = ({ label, value, onChange, placeholder }) => {
 };
 
 const TimelineEditor = ({ value, onChange }) => {
-  const textValue = useMemo(() => {
-    if (!Array.isArray(value)) {
-      return '';
-    }
-    return value
-      .map((step) => `${step?.title || ''} | ${step?.description || ''}`.trim())
-      .filter(Boolean)
+  const toText = (val) => {
+    if (!Array.isArray(val)) return '';
+    return val
+      .map((step) => {
+        const title = String(step?.title || '').trim();
+        const description = String(step?.description || '').trim();
+        if (title && description) return `${title} | ${description}`;
+        if (title) return title;
+        if (description) return `| ${description}`;
+        return '';
+      })
+      .filter((line) => line.length > 0)
       .join('\n');
+  };
+  const [textValue, setTextValue] = useState(() => toText(value));
+
+  useEffect(() => {
+    setTextValue(toText(value));
   }, [value]);
 
   return (
@@ -107,11 +125,16 @@ const TimelineEditor = ({ value, onChange }) => {
       <textarea
         value={textValue}
         onChange={(e) => {
-          const rows = e.target.value
+          const next = e.target.value;
+          setTextValue(next);
+          const rows = next
             .split('\n')
             .map((line) => line.trim())
-            .filter(Boolean)
+            .filter((line) => line.length > 0)
             .map((line) => {
+              if (!line.includes('|')) {
+                return { title: line.trim(), description: '' };
+              }
               const [title, ...rest] = line.split('|');
               return { title: (title || '').trim(), description: rest.join('|').trim() };
             })

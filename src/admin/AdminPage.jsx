@@ -157,6 +157,7 @@ const PortfolioEditor = () => {
 
   const [editing, setEditing] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [dragIndex, setDragIndex] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -467,9 +468,59 @@ const PortfolioEditor = () => {
               <span style={{ fontSize: 12, opacity: 0.6 }}>One URL per line. Used for the carousel.</span>
             </div>
             {parseList(editing.imagesText || '').length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10, marginTop: 12 }}>
-                {parseList(editing.imagesText || '').map((url) => (
-                  <div key={url} style={{ border: '1px solid #000000', aspectRatio: '4/3', backgroundImage: `url('${url}')`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+              <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
+                {parseList(editing.imagesText || '').map((url, index) => (
+                  <div
+                    key={`${url}-${index}`}
+                    draggable
+                    onDragStart={() => setDragIndex(index)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => {
+                      if (dragIndex === null || dragIndex === index) return;
+                      const list = parseList(editing.imagesText || '');
+                      const [moved] = list.splice(dragIndex, 1);
+                      list.splice(index, 0, moved);
+                      setEditing({ ...editing, imagesText: list.join('\n') });
+                      setDragIndex(null);
+                    }}
+                    onDragEnd={() => setDragIndex(null)}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '120px 1fr auto',
+                      gap: 12,
+                      alignItems: 'center',
+                      border: '1px solid #000000',
+                      padding: 10,
+                      background: dragIndex === index ? 'rgba(0,0,0,0.04)' : 'transparent'
+                    }}
+                  >
+                    <div
+                      style={{
+                        border: '1px solid #000000',
+                        aspectRatio: '4/3',
+                        backgroundImage: `url('${url}')`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    />
+                    <div style={{ fontSize: 12, wordBreak: 'break-all', opacity: 0.8 }}>
+                      {url}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        style={{ ...secondaryButtonStyle, padding: '6px 10px' }}
+                        onClick={() => {
+                          const list = parseList(editing.imagesText || '');
+                          list.splice(index, 1);
+                          setEditing({ ...editing, imagesText: list.join('\n') });
+                        }}
+                      >
+                        Delete
+                      </button>
+                      <span style={{ fontSize: 11, opacity: 0.5, alignSelf: 'center' }}>Drag to reorder</span>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : null}

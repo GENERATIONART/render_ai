@@ -394,6 +394,7 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadli
               alignItems: 'center',
               gap: '10px',
               transition: 'color 0.2s',
+              color: '#000000',
               fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif"
             }}
           >

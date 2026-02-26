@@ -238,6 +238,16 @@ export const renderInquiryConfirmationHtml = ({ customerName }) => {
   const firstName = escapeHtml((customerName || '').split(' ')[0] || 'there');
   const content = `
     <tr>
+      <td style="padding:0;line-height:0;font-size:0;">
+        <img
+          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200&h=400"
+          alt="Render AI — Architectural Visualization"
+          width="600"
+          style="width:100%;max-width:600px;height:260px;object-fit:cover;display:block;"
+        />
+      </td>
+    </tr>
+    <tr>
       <td style="padding:48px 40px 32px 40px;border-bottom:1px solid #eeeeee;">
         <div style="color:${ACCENT};font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:14px;">Inquiry Received</div>
         <h1 style="margin:0 0 16px 0;font-size:30px;font-weight:400;color:#111111;line-height:1.25;">Thanks for reaching out, ${firstName}.</h1>

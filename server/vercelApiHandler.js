@@ -384,6 +384,63 @@ export default async function handler(req, res) {
     }
   }
 
+  if (pathname === '/api/inquiry' && req.method === 'POST') {
+    const body = await readJsonBody(req);
+    if (!body) return json(res, 400, { error: 'Invalid JSON body' });
+    const { email, fullName, businessName, projectType, estimatedBudget } = body;
+    if (!email || typeof email !== 'string') return json(res, 400, { error: 'email is required' });
+    if (!fullName || typeof fullName !== 'string') return json(res, 400, { error: 'fullName is required' });
+    if (!projectType || typeof projectType !== 'string') return json(res, 400, { error: 'projectType is required' });
+    if (!estimatedBudget || typeof estimatedBudget !== 'string') return json(res, 400, { error: 'estimatedBudget is required' });
+
+    try {
+      const html = renderOwnerEmailHtml({
+        title: 'New Inquiry',
+        rows: [
+          { label: 'Name', value: fullName.trim() },
+          { label: 'Business', value: (typeof businessName === 'string' && businessName.trim()) || '(none)' },
+          { label: 'Email', value: email.trim() },
+          { label: 'Project Type', value: projectType.trim() },
+          { label: 'Estimated Budget', value: estimatedBudget.trim() }
+        ],
+        footer: 'This email was sent when the inquiry form was submitted.'
+      });
+      const text = renderOwnerEmailText({
+        title: 'New Inquiry',
+        rows: [
+          { label: 'Name', value: fullName.trim() },
+          { label: 'Business', value: (typeof businessName === 'string' && businessName.trim()) || '(none)' },
+          { label: 'Email', value: email.trim() },
+          { label: 'Project Type', value: projectType.trim() },
+          { label: 'Estimated Budget', value: estimatedBudget.trim() }
+        ],
+        footer: 'This email was sent when the inquiry form was submitted.'
+      });
+      const result = await sendOwnerEmail({
+        subject: 'New inquiry received',
+        html,
+        text,
+        tags: [{ name: 'type', value: 'inquiry' }]
+      });
+      if (result?.skipped) {
+        return json(res, 501, { error: result.reason || 'Email not configured' });
+      }
+      return json(res, 200, { ok: true });
+    } catch (e) {
+      return json(res, 500, { error: e?.message || 'Failed to send inquiry' });
+    }
+  }
+
+  if (parts[0] === 'api' && parts[1] === 'projects' && parts[2] && !parts[3] && req.method === 'GET') {
+    try {
+      const project = await getProjectById(parts[2]);
+      if (!project) return json(res, 404, { error: 'project not found' });
+      return json(res, 200, { project });
+    } catch (e) {
+      return json(res, 500, { error: e?.message || 'Failed to fetch project' });
+    }
+  }
+
   if (pathname === '/api/uploads/sign' && req.method === 'POST') {
     const body = await readJsonBody(req);
     if (!body) return json(res, 400, { error: 'Invalid JSON body' });
@@ -457,8 +514,18 @@ export default async function handler(req, res) {
       const catalogItem = SERVICE_CATALOG[serviceName];
       if (!catalogItem) return json(res, 400, { error: `Unknown serviceName: ${serviceName}` });
 
+      let amountUsd = catalogItem.amountUsd;
+      try {
+        const supabase = getSupabaseAdmin();
+        const { data } = await supabase.from('site_copy').select('value').eq('key', `service.price.${serviceName}`).single();
+        if (data?.value) {
+          const parsed = parseFloat(data.value);
+          if (!isNaN(parsed) && parsed > 0) amountUsd = parsed;
+        }
+      } catch { /* use catalog default */ }
+
       const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
-      const unitAmount = Math.round(catalogItem.amountUsd * 100);
+      const unitAmount = Math.round(amountUsd * 100);
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         client_reference_id: projectId,

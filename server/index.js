@@ -445,6 +445,62 @@ app.post('/api/projects', async (req, res) => {
   }
 });
 
+app.post('/api/inquiry', async (req, res) => {
+  try {
+    const { email, fullName, businessName, projectType, estimatedBudget } = req.body || {};
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'email is required' });
+    }
+    if (!fullName || typeof fullName !== 'string') {
+      return res.status(400).json({ error: 'fullName is required' });
+    }
+    if (!projectType || typeof projectType !== 'string') {
+      return res.status(400).json({ error: 'projectType is required' });
+    }
+    if (!estimatedBudget || typeof estimatedBudget !== 'string') {
+      return res.status(400).json({ error: 'estimatedBudget is required' });
+    }
+
+    const html = renderOwnerEmailHtml({
+      title: 'New Inquiry',
+      rows: [
+        { label: 'Name', value: fullName.trim() },
+        { label: 'Business', value: (typeof businessName === 'string' && businessName.trim()) || '(none)' },
+        { label: 'Email', value: email.trim() },
+        { label: 'Project Type', value: projectType.trim() },
+        { label: 'Estimated Budget', value: estimatedBudget.trim() }
+      ],
+      footer: 'This email was sent when the inquiry form was submitted.'
+    });
+    const text = renderOwnerEmailText({
+      title: 'New Inquiry',
+      rows: [
+        { label: 'Name', value: fullName.trim() },
+        { label: 'Business', value: (typeof businessName === 'string' && businessName.trim()) || '(none)' },
+        { label: 'Email', value: email.trim() },
+        { label: 'Project Type', value: projectType.trim() },
+        { label: 'Estimated Budget', value: estimatedBudget.trim() }
+      ],
+      footer: 'This email was sent when the inquiry form was submitted.'
+    });
+
+    const result = await sendOwnerEmail({
+      subject: 'New inquiry received',
+      html,
+      text,
+      tags: [{ name: 'type', value: 'inquiry' }]
+    });
+
+    if (result?.skipped) {
+      return res.status(501).json({ error: result.reason || 'Email not configured' });
+    }
+
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: error?.message || 'Failed to send inquiry' });
+  }
+});
+
 app.get('/api/projects/:projectId', async (req, res) => {
   try {
     const project = await getProjectById(req.params.projectId);
@@ -546,13 +602,24 @@ app.post('/api/checkout/session', async (req, res) => {
       return res.status(404).json({ error: 'project not found' });
     }
 
-    const catalogItem = SERVICE_CATALOG[project.service_name || project.serviceName];
+    const serviceName = project.service_name || project.serviceName;
+    const catalogItem = SERVICE_CATALOG[serviceName];
     if (!catalogItem) {
-      return res.status(400).json({ error: `Unknown serviceName: ${project.service_name || project.serviceName}` });
+      return res.status(400).json({ error: `Unknown serviceName: ${serviceName}` });
     }
 
+    let amountUsd = catalogItem.amountUsd;
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data } = await supabase.from('site_copy').select('value').eq('key', `service.price.${serviceName}`).single();
+      if (data?.value) {
+        const parsed = parseFloat(data.value);
+        if (!isNaN(parsed) && parsed > 0) amountUsd = parsed;
+      }
+    } catch { /* use catalog default */ }
+
     const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
-    const unitAmount = Math.round(catalogItem.amountUsd * 100);
+    const unitAmount = Math.round(amountUsd * 100);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -563,7 +630,7 @@ app.post('/api/checkout/session', async (req, res) => {
       tax_id_collection: { enabled: true },
       metadata: {
         projectId,
-        serviceName: project.service_name || project.serviceName
+        serviceName
       },
       line_items: [
         {
@@ -580,7 +647,7 @@ app.post('/api/checkout/session', async (req, res) => {
         }
       ],
       success_url: `${APP_URL}/confirmation?projectId=${encodeURIComponent(projectId)}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${APP_URL}/${encodeURIComponent(project.service_name || project.serviceName)}`
+      cancel_url: `${APP_URL}/${encodeURIComponent(serviceName)}`
     });
 
     await setStripeSession(projectId, { sessionId: session.id, paymentStatus: session.payment_status });

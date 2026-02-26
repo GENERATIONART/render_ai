@@ -97,7 +97,7 @@ const ServiceRow = ({ price, title, tag, onClick }) => {
   );
 };
 
-const FileUpload = ({ id, fileListId, onFilesChange }) => {
+const FileUpload = ({ id, onFilesChange }) => {
   const [files, setFiles] = useState([]);
 
   const setFilesAndNotify = (nextFiles) => {
@@ -175,7 +175,7 @@ const FileUpload = ({ id, fileListId, onFilesChange }) => {
   );
 };
 
-const Header = () => {
+const Header = ({ compact = false }) => {
   const navigate = useNavigate();
 
   return (
@@ -183,8 +183,8 @@ const Header = () => {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '20px 0',
-      marginBottom: '80px',
+      padding: compact ? '12px 0' : '20px 0',
+      marginBottom: compact ? '24px' : '80px',
       position: 'relative',
       zIndex: 50
     }}>
@@ -239,12 +239,60 @@ const Footer = () => (
   </footer>
 );
 
-const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadline, contactSubheadline }) => {
-  const navigate = useNavigate();
+const readApiError = async (res) => {
+  try {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await res.json();
+      return data?.error ? String(data.error) : JSON.stringify(data);
+    }
+    const text = await res.text();
+    return text ? String(text).slice(0, 300) : '';
+  } catch {
+    return '';
+  }
+};
 
-  const handleFormSubmit = (e) => {
+const HomePage = ({ servicePrices, heroHeadline, heroSubheadline, contactHeadline, contactSubheadline }) => {
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [projectType, setProjectType] = useState('');
+  const [estimatedBudget, setEstimatedBudget] = useState('');
+
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    navigate('/inquiry-confirmation');
+    if (isSubmitting) {
+      return;
+    }
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const res = await fetch('/api/inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          fullName,
+          businessName,
+          projectType,
+          estimatedBudget
+        })
+      });
+      if (!res.ok) {
+        const apiError = await readApiError(res);
+        throw new Error(`Inquiry failed (${res.status})${apiError ? `: ${apiError}` : ''}`);
+      }
+      navigate('/inquiry-confirmation');
+    } catch (error) {
+      setSubmitError(error?.message || 'Something went wrong submitting your inquiry.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const headlineText = heroHeadline || 'Architecture visualized / instantly.';
@@ -265,12 +313,12 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadli
 	      <section id="services" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
 	        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
 	        
-        <ServiceRow price="500" title="Residential Exterior" tag="24H Turnaround" onClick={() => navigate('/residential-exterior')} />
-        <ServiceRow price="750" title="Residential Interior" tag="Living Spaces" onClick={() => navigate('/residential-interior')} />
-        <ServiceRow price="850" title="Residential Aerial" tag="Neighborhood View" onClick={() => navigate('/residential-aerial')} />
-        <ServiceRow price="850" title="Commercial Exterior" tag="Office/Retail" onClick={() => navigate('/commercial-exterior')} />
-        <ServiceRow price="950" title="Commercial Interior" tag="Office/Retail" onClick={() => navigate('/commercial-interior')} />
-        <ServiceRow price="950" title="Commercial Aerial" tag="Campus View" onClick={() => navigate('/commercial-aerial')} />
+        <ServiceRow price={servicePrices['residential-exterior']} title="Residential Exterior" tag="24H Turnaround" onClick={() => navigate('/residential-exterior')} />
+        <ServiceRow price={servicePrices['residential-interior']} title="Residential Interior" tag="Living Spaces" onClick={() => navigate('/residential-interior')} />
+        <ServiceRow price={servicePrices['residential-aerial']} title="Residential Aerial" tag="Neighborhood View" onClick={() => navigate('/residential-aerial')} />
+        <ServiceRow price={servicePrices['commercial-exterior']} title="Commercial Exterior" tag="Office/Retail" onClick={() => navigate('/commercial-exterior')} />
+        <ServiceRow price={servicePrices['commercial-interior']} title="Commercial Interior" tag="Office/Retail" onClick={() => navigate('/commercial-interior')} />
+        <ServiceRow price={servicePrices['commercial-aerial']} title="Commercial Aerial" tag="Campus View" onClick={() => navigate('/commercial-aerial')} />
       </section>
 
 	      <section id="contact" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
@@ -290,6 +338,8 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadli
 	              type="email" 
 	              placeholder="Email Address" 
 	              required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
 	              style={{
 	                width: '100%',
 	                background: 'transparent',
@@ -309,6 +359,8 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadli
 	              type="text" 
 	              placeholder="Full Name"
 	              required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
 	              style={{
 	                width: '100%',
 	                background: 'transparent',
@@ -327,6 +379,8 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadli
 	            <input 
 	              type="text" 
 	              placeholder="Business Name (Optional)"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
 	              style={{
 	                width: '100%',
 	                background: 'transparent',
@@ -346,6 +400,8 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadli
 	              type="text" 
 	              placeholder="Project Type" 
 	              required
+                value={projectType}
+                onChange={(e) => setProjectType(e.target.value)}
               style={{
                 width: '100%',
                 background: 'transparent',
@@ -365,6 +421,8 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadli
               type="text" 
               placeholder="Estimated Budget" 
               required
+              value={estimatedBudget}
+              onChange={(e) => setEstimatedBudget(e.target.value)}
               style={{
                 width: '100%',
                 background: 'transparent',
@@ -382,25 +440,32 @@ const HomePage = ({ portfolioItems, heroHeadline, heroSubheadline, contactHeadli
 
           <button 
             type="submit"
+            disabled={isSubmitting}
             style={{
               background: 'transparent',
               border: 'none',
               textAlign: 'left',
               fontSize: '28px',
               fontWeight: 400,
-              cursor: 'pointer',
+              cursor: isSubmitting ? 'default' : 'pointer',
               padding: '20px 0',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '10px',
               transition: 'color 0.2s',
               color: '#000000',
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif"
+              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+              opacity: isSubmitting ? 0.6 : 1
             }}
           >
             Submit Inquiry <span>→</span>
           </button>
-        </form>
+          {!!submitError && (
+            <p style={{ marginTop: '-20px', fontSize: '13px', color: '#FF4500' }}>
+              {submitError}
+            </p>
+          )}
+	        </form>
       </section>
     </>
   );
@@ -581,7 +646,7 @@ const PortfolioPage = ({ items }) => {
   );
 };
 
-const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceName, stripeCheckoutUrl }) => {
+const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceName }) => {
   const navigate = useNavigate();
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -593,20 +658,6 @@ const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceN
 
   const proceedLabel = 'Checkout';
   const buttonLabel = isSubmitting ? 'Submitting…' : proceedLabel;
-
-  const readApiError = async (res) => {
-    try {
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const data = await res.json();
-        return data?.error ? String(data.error) : JSON.stringify(data);
-      }
-      const text = await res.text();
-      return text ? String(text).slice(0, 300) : '';
-    } catch (error) {
-      return '';
-    }
-  };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -871,7 +922,6 @@ const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceN
 	          
 	          <FileUpload
               id={`files-${serviceName}`}
-              fileListId={`file-list-${serviceName}`}
               onFilesChange={setProjectFiles}
             />
 
@@ -1237,7 +1287,7 @@ const ConfirmationPage = () => {
   }, [stripeSessionId]);
 
   return (
-    <section style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeIn 0.5s ease-out' }}>
+    <section style={{ textAlign: 'center', padding: '20px 20px 80px 20px', animation: 'fadeIn 0.5s ease-out' }}>
       <div style={{ fontSize: '64px', marginBottom: '32px' }}>✓</div>
       <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '20px' }}>
         {paymentMethod === 'wire-transfer' ? 'Wire Transfer Started' : 'Order Confirmed'}
@@ -1434,9 +1484,215 @@ const ScrollToHash = () => {
   return null;
 };
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
+
+  return null;
+};
+
+const AppFrame = ({ portfolioItems, siteCopy, servicePrices }) => {
+  const { pathname } = useLocation();
+  const isInquiry = pathname === '/inquiry-confirmation';
+  const containerStyle = {
+    ...customStyles.container,
+    padding: isInquiry
+      ? '20px clamp(16px, 4vw, 60px) 120px clamp(16px, 4vw, 60px)'
+      : customStyles.container.padding
+  };
+
+  return (
+    <div style={customStyles.root} data-app="render-ai">
+      <div style={containerStyle}>
+        <Header compact={isInquiry} />
+        
+        <AppErrorBoundary>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <HomePage
+                  servicePrices={servicePrices}
+                  heroHeadline={siteCopy['home.hero_headline']}
+                  heroSubheadline={siteCopy['home.hero_subheadline']}
+                  contactHeadline={siteCopy['contact.headline']}
+                  contactSubheadline={siteCopy['contact.subheadline']}
+                />
+              }
+            />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route
+              path="/about"
+              element={
+                <AboutPage
+                  aboutHeadline={siteCopy['about.headline']}
+                  aboutHighlight={siteCopy['about.highlight']}
+                  aboutBody={siteCopy['about.body']}
+                  aboutSectors={siteCopy['about.sectors']}
+                  aboutCapabilities={siteCopy['about.capabilities']}
+                />
+              }
+            />
+            <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
+            <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
+            <Route path="/residential-exterior" element={
+              <ServiceDetailPage
+                price={servicePrices['residential-exterior']}
+                title="Residential Exterior"
+                subtitle="Photorealistic visualization for single-family homes to showcase architectural intent and curb appeal."
+                serviceName="residential-exterior"
+                includes={[
+                  "1 High-Res Rendering (4k)",
+                  "Environment Integration (Day/Dusk)",
+                  "Landscape & Vegetation",
+                  "Standard Material Library",
+                  "2 Rounds of Revisions",
+                  "24-Hour Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                  { title: "Material Setup", description: "We apply textures based on your moodboard or specs." },
+                  { title: "Lighting Draft", description: "Review low-res lighting pass for approval." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/residential-interior" element={
+              <ServiceDetailPage
+                price={servicePrices['residential-interior']}
+                title="Residential Interior"
+                subtitle="Detailed interior staging focused on living spaces, furniture curation, and atmospheric lighting."
+                serviceName="residential-interior"
+                includes={[
+                  "1 High-Res Rendering (4k)",
+                  "Custom Furniture Selection",
+                  "Complex Lighting Setup",
+                  "Soft Goods & Decor Details",
+                  "3 Rounds of Revisions",
+                  "48-Hour Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                  { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
+                  { title: "Draft Review", description: "Check angles, textures, and lighting balance." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/residential-aerial" element={
+              <ServiceDetailPage
+                price={servicePrices['residential-aerial']}
+                title="Residential Aerial"
+                subtitle="Drone-view perspective to establish neighborhood context, landscaping, and property boundaries."
+                serviceName="residential-aerial"
+                includes={[
+                  "1 Wide-Angle Aerial View",
+                  "Full Site Modeling",
+                  "Surrounding Context (Ghosted or Detailed)",
+                  "Vegetation & Topography",
+                  "3 Rounds of Revisions",
+                  "3-Day Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
+                  { title: "Massing", description: "We establish the scale of the building vs the environment." },
+                  { title: "Environment", description: "Adding trees, roads, cars, and neighboring structures." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/commercial-exterior" element={
+              <ServiceDetailPage
+                price={servicePrices['commercial-exterior']}
+                title="Commercial Exterior"
+                subtitle="Striking visuals for retail, office, and mixed-use developments focused on scale and branding."
+                serviceName="commercial-exterior"
+                includes={[
+                  "1 Hero Shot (Street Level)",
+                  "Commercial Entourage (People/Cars)",
+                  "Signage & Branding Integration",
+                  "Glass & Facade Detailing",
+                  "3 Rounds of Revisions",
+                  "3-4 Day Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                  { title: "Brand Integration", description: "Placement of logos, signage, and brand colors." },
+                  { title: "Life & Activity", description: "Populating the scene with shoppers, workers, and activity." }
+                ]}
+              />
+            } />
+            <Route path="/commercial-interior" element={
+              <ServiceDetailPage
+                price={servicePrices['commercial-interior']}
+                title="Commercial Interior"
+                subtitle="Office, retail, and hospitality interiors that communicate flow, capacity, and atmosphere."
+                serviceName="commercial-interior"
+                includes={[
+                  "1 Perspective View",
+                  "Office/Retail Furniture Systems",
+                  "Advanced Lighting (Artificial)",
+                  "Entourage (People working/shopping)",
+                  "4 Rounds of Revisions",
+                  "5 Day Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
+                  { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
+                  { title: "Lighting Design", description: "IES profiles for accurate artificial lighting simulation." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/commercial-aerial" element={
+              <ServiceDetailPage
+                price={servicePrices['commercial-aerial']}
+                title="Commercial Aerial"
+                subtitle="Bird's eye perspective for office parks, retail centers, and mixed-use developments showcasing site planning and scale."
+                serviceName="commercial-aerial"
+                includes={[
+                  "1 Wide-Angle Campus View",
+                  "Multi-Building Site Modeling",
+                  "Parking & Infrastructure",
+                  "Signage & Branding",
+                  "4 Rounds of Revisions",
+                  "5-Day Turnaround"
+                ]}
+                process={[
+                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
+                  { title: "Site Layout", description: "We model the campus, parking lots, and access roads." },
+                  { title: "Context Building", description: "Adding surrounding buildings, vehicles, and landscaping." },
+                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
+                ]}
+              />
+            } />
+            <Route path="/confirmation" element={<ConfirmationPage />} />
+            <Route path="/inquiry-confirmation" element={<InquiryConfirmationPage />} />
+          </Routes>
+        </AppErrorBoundary>
+        
+        <Footer />
+      </div>
+    </div>
+  );
+};
+
+const PRICE_DEFAULTS = {
+  'residential-exterior': 500,
+  'residential-interior': 750,
+  'residential-aerial': 850,
+  'commercial-exterior': 850,
+  'commercial-interior': 950,
+  'commercial-aerial': 950
+};
+
 const App = () => {
   const [portfolioItems, setPortfolioItems] = useState(portfolioData);
   const [siteCopy, setSiteCopy] = useState({});
+  const [servicePrices, setServicePrices] = useState(PRICE_DEFAULTS);
 
   useEffect(() => {
     const linkElement = document.createElement('link');
@@ -1708,7 +1964,13 @@ const App = () => {
             'about.sectors',
             'about.capabilities',
             'contact.headline',
-            'contact.subheadline'
+            'contact.subheadline',
+            'service.price.residential-exterior',
+            'service.price.residential-interior',
+            'service.price.residential-aerial',
+            'service.price.commercial-exterior',
+            'service.price.commercial-interior',
+            'service.price.commercial-aerial'
           ]);
         if (error) {
           return;
@@ -1718,6 +1980,12 @@ const App = () => {
           map[row.key] = row.value;
         }
         setSiteCopy(map);
+        const prices = {};
+        for (const [k, def] of Object.entries(PRICE_DEFAULTS)) {
+          const raw = map[`service.price.${k}`];
+          prices[k] = raw ? (parseFloat(raw) || def) : def;
+        }
+        setServicePrices(prices);
       } catch (error) {
         // ignore
       }
@@ -1727,185 +1995,9 @@ const App = () => {
 
 	  return (
 	    <Router basename="/">
+	      <ScrollToTop />
 	      <ScrollToHash />
-	      <div style={customStyles.root} data-app="render-ai">
-	        <div style={customStyles.container}>
-	          <Header />
-	          
-            <AppErrorBoundary>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <HomePage
-                      portfolioItems={portfolioItems}
-                      heroHeadline={siteCopy['home.hero_headline']}
-                      heroSubheadline={siteCopy['home.hero_subheadline']}
-                      contactHeadline={siteCopy['contact.headline']}
-                      contactSubheadline={siteCopy['contact.subheadline']}
-                    />
-                  }
-                />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route
-                  path="/about"
-                  element={
-                    <AboutPage
-                      aboutHeadline={siteCopy['about.headline']}
-                      aboutHighlight={siteCopy['about.highlight']}
-                      aboutBody={siteCopy['about.body']}
-                      aboutSectors={siteCopy['about.sectors']}
-                      aboutCapabilities={siteCopy['about.capabilities']}
-                    />
-                  }
-                />
-                <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
-                <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
-                <Route path="/residential-exterior" element={
-                  <ServiceDetailPage 
-                    price="500"
-                    title="Residential Exterior"
-                    subtitle="Photorealistic visualization for single-family homes to showcase architectural intent and curb appeal."
-                    serviceName="residential-exterior"
-                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                    includes={[
-                      "1 High-Res Rendering (4k)",
-                      "Environment Integration (Day/Dusk)",
-                      "Landscape & Vegetation",
-                      "Standard Material Library",
-                      "2 Rounds of Revisions",
-                      "24-Hour Turnaround"
-                    ]}
-                    process={[
-                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                      { title: "Material Setup", description: "We apply textures based on your moodboard or specs." },
-                      { title: "Lighting Draft", description: "Review low-res lighting pass for approval." },
-                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                    ]}
-                  />
-                } />
-                <Route path="/residential-interior" element={
-                  <ServiceDetailPage 
-                    price="750"
-                    title="Residential Interior"
-                    subtitle="Detailed interior staging focused on living spaces, furniture curation, and atmospheric lighting."
-                    serviceName="residential-interior"
-                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                    includes={[
-                      "1 High-Res Rendering (4k)",
-                      "Custom Furniture Selection",
-                      "Complex Lighting Setup",
-                      "Soft Goods & Decor Details",
-                      "3 Rounds of Revisions",
-                      "48-Hour Turnaround"
-                    ]}
-                    process={[
-                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                      { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
-                      { title: "Draft Review", description: "Check angles, textures, and lighting balance." },
-                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                    ]}
-                  />
-                } />
-                <Route path="/residential-aerial" element={
-                  <ServiceDetailPage 
-                    price="850"
-                    title="Residential Aerial"
-                    subtitle="Drone-view perspective to establish neighborhood context, landscaping, and property boundaries."
-                    serviceName="residential-aerial"
-                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                    includes={[
-                      "1 Wide-Angle Aerial View",
-                      "Full Site Modeling",
-                      "Surrounding Context (Ghosted or Detailed)",
-                      "Vegetation & Topography",
-                      "3 Rounds of Revisions",
-                      "3-Day Turnaround"
-                    ]}
-                    process={[
-                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
-                      { title: "Massing", description: "We establish the scale of the building vs the environment." },
-                      { title: "Environment", description: "Adding trees, roads, cars, and neighboring structures." },
-                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                    ]}
-                  />
-                } />
-                <Route path="/commercial-exterior" element={
-                  <ServiceDetailPage 
-                    price="850"
-                    title="Commercial Exterior"
-                    subtitle="Striking visuals for retail, office, and mixed-use developments focused on scale and branding."
-                    serviceName="commercial-exterior"
-                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                    includes={[
-                      "1 Hero Shot (Street Level)",
-                      "Commercial Entourage (People/Cars)",
-                      "Signage & Branding Integration",
-                      "Glass & Facade Detailing",
-                      "3 Rounds of Revisions",
-                      "3-4 Day Turnaround"
-                    ]}
-                    process={[
-                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                      { title: "Brand Integration", description: "Placement of logos, signage, and brand colors." },
-                      { title: "Life & Activity", description: "Populating the scene with shoppers, workers, and activity." }
-                    ]}
-                  />
-                } />
-                <Route path="/commercial-interior" element={
-                  <ServiceDetailPage 
-                    price="950"
-                    title="Commercial Interior"
-                    subtitle="Office, retail, and hospitality interiors that communicate flow, capacity, and atmosphere."
-                    serviceName="commercial-interior"
-                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                    includes={[
-                      "1 Perspective View",
-                      "Office/Retail Furniture Systems",
-                      "Advanced Lighting (Artificial)",
-                      "Entourage (People working/shopping)",
-                      "4 Rounds of Revisions",
-                      "5 Day Turnaround"
-                    ]}
-                    process={[
-                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                      { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
-                      { title: "Lighting Design", description: "IES profiles for accurate artificial lighting simulation." },
-                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                    ]}
-                  />
-                } />
-                <Route path="/commercial-aerial" element={
-                  <ServiceDetailPage 
-                    price="950"
-                    title="Commercial Aerial"
-                    subtitle="Bird's eye perspective for office parks, retail centers, and mixed-use developments showcasing site planning and scale."
-                    serviceName="commercial-aerial"
-                    stripeCheckoutUrl={import.meta.env.VITE_STRIPE_CHECKOUT_URL}
-                    includes={[
-                      "1 Wide-Angle Campus View",
-                      "Multi-Building Site Modeling",
-                      "Parking & Infrastructure",
-                      "Signage & Branding",
-                      "4 Rounds of Revisions",
-                      "5-Day Turnaround"
-                    ]}
-                    process={[
-                      { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
-                      { title: "Site Layout", description: "We model the campus, parking lots, and access roads." },
-                      { title: "Context Building", description: "Adding surrounding buildings, vehicles, and landscaping." },
-                      { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                    ]}
-                  />
-                } />
-                <Route path="/confirmation" element={<ConfirmationPage />} />
-                <Route path="/inquiry-confirmation" element={<InquiryConfirmationPage />} />
-              </Routes>
-            </AppErrorBoundary>
-	          
-	          <Footer />
-	        </div>
-	      </div>
+	      <AppFrame portfolioItems={portfolioItems} siteCopy={siteCopy} servicePrices={servicePrices} />
 	    </Router>
   );
 };

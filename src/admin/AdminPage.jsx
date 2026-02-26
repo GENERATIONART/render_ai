@@ -985,6 +985,103 @@ const ContactEditor = () => {
     </div>
   );
 };
+
+const SERVICES = [
+  { key: 'residential-exterior', label: 'Residential Exterior', defaultPrice: 500 },
+  { key: 'residential-interior', label: 'Residential Interior', defaultPrice: 750 },
+  { key: 'residential-aerial', label: 'Residential Aerial', defaultPrice: 850 },
+  { key: 'commercial-exterior', label: 'Commercial Exterior', defaultPrice: 850 },
+  { key: 'commercial-interior', label: 'Commercial Interior', defaultPrice: 950 },
+  { key: 'commercial-aerial', label: 'Commercial Aerial', defaultPrice: 950 }
+];
+
+const PricingEditor = () => {
+  const [prices, setPrices] = useState(() =>
+    Object.fromEntries(SERVICES.map((s) => [s.key, String(s.defaultPrice)]))
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const load = async () => {
+    setError('');
+    try {
+      const keys = SERVICES.map((s) => `service.price.${s.key}`).join(',');
+      const res = await fetch(`/api/admin/site-copy?keys=${keys}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `Failed to load (${res.status})`);
+      const map = new Map((data.rows || []).map((row) => [row.key, row.value]));
+      setPrices((prev) => {
+        const next = { ...prev };
+        for (const s of SERVICES) {
+          const val = map.get(`service.price.${s.key}`);
+          if (val !== undefined) next[s.key] = val;
+        }
+        return next;
+      });
+    } catch (e) {
+      setError(e?.message || 'Failed to load');
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    const rows = SERVICES.map((s) => ({
+      key: `service.price.${s.key}`,
+      value: String(parseFloat(prices[s.key]) || s.defaultPrice)
+    }));
+    try {
+      const res = await fetch('/api/admin/site-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `Save failed (${res.status})`);
+    } catch (e) {
+      setError(e?.message || 'Save failed');
+      setSaving(false);
+      return;
+    }
+    setSaved(true);
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 560 }}>
+      {!!error && <p style={{ color: '#FF4500', marginBottom: 16 }}>{error}</p>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {SERVICES.map((s) => (
+          <div key={s.key} style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 24, borderBottom: '1px solid rgba(0,0,0,0.1)', padding: '14px 0' }}>
+            <div style={labelStyle}>{s.label}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 18, fontWeight: 500 }}>$</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={prices[s.key]}
+                onChange={(e) => setPrices((prev) => ({ ...prev, [s.key]: e.target.value }))}
+                style={{ ...inputStyle, width: 100, textAlign: 'right' }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 20 }}>
+        <button type="button" style={buttonStyle} onClick={save} disabled={saving}>
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        {saved ? <span style={{ fontSize: 14, opacity: 0.7 }}>Saved.</span> : null}
+      </div>
+    </div>
+  );
+};
+
 export const AdminPage = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [sessionEmail, setSessionEmail] = useState('');
@@ -1129,6 +1226,17 @@ export const AdminPage = () => {
           >
             Contact
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('pricing')}
+            style={{
+              ...secondaryButtonStyle,
+              background: tab === 'pricing' ? '#000000' : 'transparent',
+              color: tab === 'pricing' ? '#F4F4F4' : '#000000'
+            }}
+          >
+            Pricing
+          </button>
         </div>
       </Section>
 
@@ -1153,6 +1261,12 @@ export const AdminPage = () => {
       {tab === 'contact' ? (
         <Section title="Contact" subtitle="Edit the contact section headline and subheadline.">
           <ContactEditor />
+        </Section>
+      ) : null}
+
+      {tab === 'pricing' ? (
+        <Section title="Pricing" subtitle="Update service prices. Changes apply immediately to the site and Stripe checkout.">
+          <PricingEditor />
         </Section>
       ) : null}
     </>

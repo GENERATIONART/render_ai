@@ -625,9 +625,6 @@ app.post('/api/checkout/session', async (req, res) => {
       mode: 'payment',
       client_reference_id: projectId,
       customer_email: project.email,
-      billing_address_collection: 'required',
-      automatic_tax: { enabled: true },
-      tax_id_collection: { enabled: true },
       metadata: {
         projectId,
         serviceName

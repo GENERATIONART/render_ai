@@ -547,27 +547,24 @@ app.post('/api/projects/:projectId/files', async (req, res) => {
     const recorded = await recordProjectFiles(projectId, files);
 
     try {
-      const fileLines = recorded.map((f) => `${f.original_name || '(file)'} (${f.size_bytes ?? 0} bytes)`).join('\n');
-      const html = renderOwnerEmailHtml({
-        title: 'Project Files Uploaded',
-        rows: [
-          { label: 'Project ID', value: projectId },
-          { label: 'Service', value: project.service_name || project.serviceName || '' },
-          { label: 'Count', value: String(recorded.length) },
-          { label: 'Files', value: recorded.map((f) => f.original_name).filter(Boolean).join(', ') || '(none)' }
-        ],
-        footer: fileLines ? `Files:\n${fileLines}` : undefined
-      });
-      const text = renderOwnerEmailText({
-        title: 'Project Files Uploaded',
-        rows: [
-          { label: 'Project ID', value: projectId },
-          { label: 'Service', value: project.service_name || project.serviceName || '' },
-          { label: 'Count', value: String(recorded.length) },
-          { label: 'Files', value: recorded.map((f) => f.original_name).filter(Boolean).join(', ') || '(none)' }
-        ],
-        footer: fileLines ? `Files:\n${fileLines}` : undefined
-      });
+      const supabase = getSupabaseAdmin();
+      const fileRows = await Promise.all(
+        recorded.map(async (f) => {
+          let href;
+          try {
+            const { data } = await supabase.storage.from(f.bucket).createSignedUrl(f.path, 60 * 60 * 24 * 7);
+            href = data?.signedUrl;
+          } catch { /* no link */ }
+          return { label: f.original_name || 'File', value: f.original_name || 'Download', href };
+        })
+      );
+      const baseRows = [
+        { label: 'Project ID', value: projectId },
+        { label: 'Service', value: project.service_name || project.serviceName || '' },
+        { label: 'Count', value: String(recorded.length) }
+      ];
+      const html = renderOwnerEmailHtml({ title: 'Project Files Uploaded', rows: [...baseRows, ...fileRows] });
+      const text = renderOwnerEmailText({ title: 'Project Files Uploaded', rows: [...baseRows, ...fileRows] });
       await sendOwnerEmail({
         subject: `Files uploaded: ${project.service_name || project.serviceName || 'project'}`,
         html,

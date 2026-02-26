@@ -60,13 +60,13 @@ export const sendOwnerEmail = async ({ subject, html, text, tags }) => {
 export const renderOwnerEmailHtml = ({ title, rows, footer }) => {
   const body = rows
     .map(
-      ({ label, value }) => `
+      ({ label, value, href }) => `
         <tr>
           <td style="padding:10px 12px;border:1px solid #e6e6e6;background:#fafafa;font-weight:600;vertical-align:top;width:180px;">
             ${escapeHtml(label)}
           </td>
           <td style="padding:10px 12px;border:1px solid #e6e6e6;vertical-align:top;">
-            ${escapeHtml(value)}
+            ${href ? `<a href="${escapeHtml(href)}" style="color:#0066cc;word-break:break-all;">${escapeHtml(value)}</a>` : escapeHtml(value)}
           </td>
         </tr>
       `
@@ -90,7 +90,7 @@ export const renderOwnerEmailText = ({ title, rows, footer }) => {
   const lines = [
     title,
     '',
-    ...rows.map(({ label, value }) => `${label}: ${value ?? ''}`),
+    ...rows.map(({ label, value, href }) => href ? `${label}: ${value ?? ''}\n  ${href}` : `${label}: ${value ?? ''}`),
     footer ? `\n${footer}` : ''
   ];
   return lines.join('\n');

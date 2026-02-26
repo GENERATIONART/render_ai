@@ -4,7 +4,7 @@ import cors from 'cors';
 import Stripe from 'stripe';
 import { SERVICE_CATALOG } from './lib/catalog.js';
 import { createProject, createSignedUpload, getProjectById, isStripeEventProcessed, listProjectFiles, markPaid, markStripeEventProcessed, recordProjectFiles, setStripeSession } from './lib/supabaseStore.js';
-import { renderOwnerEmailHtml, renderOwnerEmailText, sendOwnerEmail } from './lib/email.js';
+import { renderOwnerEmailHtml, renderOwnerEmailText, sendOwnerEmail, sendEmail, renderBookingConfirmationHtml, renderBookingConfirmationText, renderInquiryConfirmationHtml, renderInquiryConfirmationText } from './lib/email.js';
 import crypto from 'node:crypto';
 import { getSupabaseAdmin } from './lib/supabaseAdmin.js';
 
@@ -439,6 +439,19 @@ app.post('/api/projects', async (req, res) => {
       console.error('[email] booking_created failed', error);
     }
 
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Your Render AI order is confirmed',
+        html: renderBookingConfirmationHtml({ customerName: fullName.trim(), serviceName, projectId: project.id }),
+        text: renderBookingConfirmationText({ customerName: fullName.trim(), serviceName, projectId: project.id }),
+        tags: [{ name: 'type', value: 'booking_confirmation' }]
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('[email] booking_confirmation customer email failed', error);
+    }
+
     return res.json({ projectId: project.id });
   } catch (error) {
     return res.status(500).json({ error: error?.message || 'Failed to create project' });
@@ -493,6 +506,19 @@ app.post('/api/inquiry', async (req, res) => {
 
     if (result?.skipped) {
       return res.status(501).json({ error: result.reason || 'Email not configured' });
+    }
+
+    try {
+      await sendEmail({
+        to: email.trim(),
+        subject: 'We received your Render AI inquiry',
+        html: renderInquiryConfirmationHtml({ customerName: fullName.trim() }),
+        text: renderInquiryConfirmationText({ customerName: fullName.trim() }),
+        tags: [{ name: 'type', value: 'inquiry_confirmation' }]
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('[email] inquiry_confirmation customer email failed', error);
     }
 
     return res.json({ ok: true });

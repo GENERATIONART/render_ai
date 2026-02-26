@@ -1369,7 +1369,7 @@ const ConfirmationPage = () => {
       </div>
 
       <p style={{ fontSize: '16px', opacity: 0.6, marginBottom: '40px' }}>
-        Questions? Email us at <span style={{ color: '#FF4500', fontWeight: 600 }}>hello@render-ai.com</span>
+        Questions? Email us at <span style={{ color: '#FF4500', fontWeight: 600 }}>hello@renderai.lol</span>
       </p>
 
       <button 
@@ -1441,7 +1441,7 @@ const InquiryConfirmationPage = () => {
       </div>
 
       <p style={{ fontSize: '16px', opacity: 0.6, marginBottom: '40px' }}>
-        Need to add more details? Email us at <span style={{ color: '#FF4500', fontWeight: 600 }}>hello@render-ai.com</span>
+        Need to add more details? Email us at <span style={{ color: '#FF4500', fontWeight: 600 }}>hello@renderai.lol</span>
       </p>
 
       <button

@@ -13,7 +13,7 @@ import {
   setStripeSession
 } from './lib/supabaseStore.js';
 import { getSupabaseAdmin } from './lib/supabaseAdmin.js';
-import { renderOwnerEmailHtml, renderOwnerEmailText, sendOwnerEmail } from './lib/email.js';
+import { renderOwnerEmailHtml, renderOwnerEmailText, sendOwnerEmail, sendEmail, renderBookingConfirmationHtml, renderBookingConfirmationText, renderInquiryConfirmationHtml, renderInquiryConfirmationText } from './lib/email.js';
 
 const json = (res, status, body) => {
   res.statusCode = status;
@@ -378,6 +378,18 @@ export default async function handler(req, res) {
         // best effort
       }
 
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Your Render AI order is confirmed',
+          html: renderBookingConfirmationHtml({ customerName: fullName.trim(), serviceName, projectId: project.id }),
+          text: renderBookingConfirmationText({ customerName: fullName.trim(), serviceName, projectId: project.id }),
+          tags: [{ name: 'type', value: 'booking_confirmation' }]
+        });
+      } catch {
+        // best effort
+      }
+
       return json(res, 200, { projectId: project.id, project });
     } catch (e) {
       return json(res, 500, { error: e?.message || 'Failed to create project' });
@@ -425,6 +437,19 @@ export default async function handler(req, res) {
       if (result?.skipped) {
         return json(res, 501, { error: result.reason || 'Email not configured' });
       }
+
+      try {
+        await sendEmail({
+          to: email.trim(),
+          subject: 'We received your Render AI inquiry',
+          html: renderInquiryConfirmationHtml({ customerName: fullName.trim() }),
+          text: renderInquiryConfirmationText({ customerName: fullName.trim() }),
+          tags: [{ name: 'type', value: 'inquiry_confirmation' }]
+        });
+      } catch {
+        // best effort
+      }
+
       return json(res, 200, { ok: true });
     } catch (e) {
       return json(res, 500, { error: e?.message || 'Failed to send inquiry' });

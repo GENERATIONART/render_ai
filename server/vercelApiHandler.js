@@ -378,7 +378,7 @@ export default async function handler(req, res) {
         // best effort
       }
 
-      return json(res, 200, { project });
+      return json(res, 200, { projectId: project.id, project });
     } catch (e) {
       return json(res, 500, { error: e?.message || 'Failed to create project' });
     }

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /api/
+Disallow: /confirmation
+Disallow: /inquiry-confirmation
+
+Sitemap: https://renderai.lol/sitemap.xml

@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useParams, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useLocation } from 'react-router-dom';
 import portfolioData from './portfolioData.js';
 import { getSupabaseBrowser } from './lib/supabaseBrowser.js';
 import { AdminPage } from './admin/AdminPage.jsx';
+import PageMeta from './PageMeta.jsx';
+
+const HomePage = React.lazy(() => import('./pages/HomePage.jsx'));
+const AboutPage = React.lazy(() => import('./pages/AboutPage.jsx'));
+const PortfolioPage = React.lazy(() => import('./pages/PortfolioPage.jsx'));
+const PortfolioDetailPage = React.lazy(() => import('./pages/PortfolioDetailPage.jsx'));
+const ServiceDetailPage = React.lazy(() => import('./pages/ServiceDetailPage.jsx'));
+const CustomProjectPage = React.lazy(() => import('./pages/CustomProjectPage.jsx'));
+const ConfirmationPage = React.lazy(() => import('./pages/ConfirmationPage.jsx'));
+const InquiryConfirmationPage = React.lazy(() => import('./pages/InquiryConfirmationPage.jsx'));
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage.jsx'));
 
 class AppErrorBoundary extends React.Component {
   constructor(props) {
@@ -59,173 +70,8 @@ const customStyles = {
   }
 };
 
-const ServiceRow = ({ price, priceDisplay, title, tag, onClick }) => {
-  const [isHovered, setIsHovered] = useState(false);
 
-  return (
-    <>
-      <div
-        data-service-row
-        onClick={onClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '100px 1fr auto',
-          alignItems: 'baseline',
-          padding: '32px 0',
-          position: 'relative',
-          cursor: 'pointer',
-          gap: '20px',
-          transition: 'background 0.2s',
-          backgroundColor: isHovered ? 'rgba(0,0,0,0.02)' : 'transparent'
-        }}
-      >
-        <div data-service-price style={{ fontSize: '32px', fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1, color: '#FF4500' }}>
-          {priceDisplay !== undefined ? priceDisplay : `$${price}`}
-        </div>
-        <div data-service-title style={{ fontSize: '32px', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
-          {title} <span style={{ fontSize: '14px', verticalAlign: 'middle', marginLeft: '10px', fontWeight: 400, display: 'inline-block', opacity: 0.6 }}>({tag})</span>
-        </div>
-        <div data-service-cta style={{ fontSize: '16px', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#FF4500' }}>Start</span> 
-          <span style={{ transition: 'transform 0.2s ease', transform: isHovered ? 'translateX(5px)' : 'translateX(0)' }}>→</span>
-        </div>
-      </div>
-      <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
-    </>
-  );
-};
 
-const SelectableServiceRow = ({ price, title, tag, selected, onToggle }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <>
-      <div
-        data-custom-service-row
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '100px 1fr auto',
-          alignItems: 'center',
-          padding: '28px 0',
-          gap: '20px',
-          backgroundColor: selected ? 'rgba(255,69,0,0.04)' : isHovered ? 'rgba(0,0,0,0.02)' : 'transparent',
-          transition: 'background 0.2s'
-        }}
-      >
-        <div style={{ fontSize: '28px', fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1, color: '#FF4500' }}>
-          ${price}
-        </div>
-        <div style={{ fontSize: '24px', fontWeight: 400, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
-          {title} <span style={{ fontSize: '13px', verticalAlign: 'middle', marginLeft: '8px', fontWeight: 400, display: 'inline-block', opacity: 0.6 }}>({tag})</span>
-        </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          style={{
-            background: selected ? '#FF4500' : 'transparent',
-            border: `2px solid ${selected ? '#FF4500' : '#000000'}`,
-            color: selected ? '#ffffff' : '#000000',
-            fontSize: '13px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            padding: '10px 20px',
-            fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            transition: 'all 0.2s',
-            whiteSpace: 'nowrap',
-            minWidth: '100px'
-          }}
-        >
-          {selected ? '✓ Added' : '+ Add'}
-        </button>
-      </div>
-      <hr style={{ width: '100%', height: '2px', backgroundColor: selected ? '#FF4500' : '#000000', opacity: selected ? 0.3 : 1, margin: 0, border: 'none', transition: 'all 0.2s' }} />
-    </>
-  );
-};
-
-const FileUpload = ({ id, onFilesChange }) => {
-  const [files, setFiles] = useState([]);
-
-  const setFilesAndNotify = (nextFiles) => {
-    setFiles(nextFiles);
-    if (typeof onFilesChange === 'function') {
-      onFilesChange(nextFiles);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    const newFiles = Array.from(e.target.files);
-    setFilesAndNotify([...files, ...newFiles]);
-  };
-
-  const removeFile = (index) => {
-    setFilesAndNotify(files.filter((_, i) => i !== index));
-  };
-
-  return (
-    <div style={{ margin: '40px 0' }}>
-      <div 
-        onClick={() => document.getElementById(id).click()}
-        data-upload-box
-        style={{
-          border: '2px dashed #000000',
-          padding: '40px 24px',
-          textAlign: 'center',
-          transition: 'all 0.2s',
-          cursor: 'pointer',
-          background: 'transparent'
-        }}
-      >
-        <div data-upload-icon style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.3 }}>📁</div>
-        <div style={{ fontSize: '18px', fontWeight: 500, marginBottom: '8px' }}>Click to upload or drag files here</div>
-        <div style={{ fontSize: '14px', opacity: 0.6 }}>All file types accepted: CAD, images, PDFs, sketches, photos, videos (Max 100MB per file)</div>
-      </div>
-      <input 
-        type="file" 
-        id={id}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-        multiple 
-        accept="*"
-      />
-      {files.length > 0 && (
-        <div data-upload-list style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {files.map((file, index) => (
-            <div data-upload-item key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', border: '1px solid #000000', fontSize: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span>📄</span>
-                <span>{file.name}</span>
-              </div>
-              <span 
-                onClick={() => removeFile(index)}
-                style={{ cursor: 'pointer', padding: '4px 8px', opacity: 0.6, transition: 'opacity 0.2s' }}
-              >
-                ✕
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-      <div style={{ marginTop: '32px', padding: '24px', backgroundColor: 'rgba(0,0,0,0.02)' }}>
-        <h4 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>For Best Results, Include:</h4>
-        <ul style={{ listStyle: 'none', fontSize: '14px', lineHeight: 1.8 }}>
-          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Photo references for style direction</li>
-          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Hand sketches or digital drawings</li>
-          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>CAD files (SKP, RVT, DWG, Rhino)</li>
-          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Material samples or mood boards</li>
-          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Furniture and decor inspiration images</li>
-          <li><span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>Lighting references and time-of-day preferences</li>
-        </ul>
-      </div>
-    </div>
-  );
-};
 
 const Header = ({ compact = false }) => {
   const navigate = useNavigate();
@@ -291,1501 +137,7 @@ const Footer = () => (
   </footer>
 );
 
-const readApiError = async (res) => {
-  try {
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const data = await res.json();
-      return data?.error ? String(data.error) : JSON.stringify(data);
-    }
-    const text = await res.text();
-    return text ? String(text).slice(0, 300) : '';
-  } catch {
-    return '';
-  }
-};
 
-const HomePage = ({ servicePrices, heroHeadline, heroSubheadline, contactHeadline, contactSubheadline }) => {
-  const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [projectType, setProjectType] = useState('');
-  const [estimatedBudget, setEstimatedBudget] = useState('');
-
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) {
-      return;
-    }
-    setIsSubmitting(true);
-    setSubmitError('');
-
-    try {
-      const res = await fetch('/api/inquiry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          fullName,
-          businessName,
-          projectType,
-          estimatedBudget
-        })
-      });
-      if (!res.ok) {
-        const apiError = await readApiError(res);
-        throw new Error(`Inquiry failed (${res.status})${apiError ? `: ${apiError}` : ''}`);
-      }
-      navigate('/inquiry-confirmation');
-    } catch (error) {
-      setSubmitError(error?.message || 'Something went wrong submitting your inquiry.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const headlineText = heroHeadline || 'Architecture visualized / instantly.';
-  const subheadlineText =
-    heroSubheadline ||
-    'High fidelity renderings for Interior Designers, Architects, Builders, Real Estate Developers, Real Estate Agents, and Homeowners starting at';
-
-	  return (
-	    <>
-      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
-        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
-          {headlineText} <br />
-          {subheadlineText} <span style={{ color: '#FF4500' }}>$500</span>.
-        </h2>
-	      </section>
-
-	      <section id="services" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-	        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
-	        
-        <ServiceRow price={servicePrices['residential-exterior']} title="Residential Exterior" tag="24H Turnaround" onClick={() => navigate('/residential-exterior')} />
-        <ServiceRow price={servicePrices['residential-interior']} title="Residential Interior" tag="Living Spaces" onClick={() => navigate('/residential-interior')} />
-        <ServiceRow price={servicePrices['residential-aerial']} title="Residential Aerial" tag="Neighborhood View" onClick={() => navigate('/residential-aerial')} />
-        <ServiceRow price={servicePrices['commercial-exterior']} title="Commercial Exterior" tag="Office/Retail" onClick={() => navigate('/commercial-exterior')} />
-        <ServiceRow price={servicePrices['commercial-interior']} title="Commercial Interior" tag="Office/Retail" onClick={() => navigate('/commercial-interior')} />
-        <ServiceRow price={servicePrices['commercial-aerial']} title="Commercial Aerial" tag="Campus View" onClick={() => navigate('/commercial-aerial')} />
-        <ServiceRow price={servicePrices['3d-model']} title="3D Model" tag="SKP / DWG / 3DS" onClick={() => navigate('/3d-model')} />
-        <ServiceRow priceDisplay="Custom" title="Build Your Own" tag="Mix & Match Services" onClick={() => navigate('/custom')} />
-      </section>
-
-	      <section id="contact" style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-	        <h2 style={{ fontWeight: 900, fontSize: '32px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-            {contactHeadline || 'PROJECT / INQUIRY'}
-          </h2>
-          {contactSubheadline ? (
-            <p style={{ fontSize: '16px', opacity: 0.7, marginTop: 0, marginBottom: '20px' }}>
-              {contactSubheadline}
-            </p>
-          ) : null}
-	        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
-
-	        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: '40px' }}>
-	          <div style={{ position: 'relative' }}>
-	            <input 
-	              type="email" 
-	              placeholder="Email Address" 
-	              required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-	              style={{
-	                width: '100%',
-	                background: 'transparent',
-	                border: 'none',
-	                borderBottom: '2px solid #000000',
-	                padding: '16px 0',
-	                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-	                fontSize: '24px',
-	                color: '#000000',
-	                borderRadius: 0,
-	                outline: 'none'
-	              }}
-	            />
-	          </div>
-	          <div style={{ position: 'relative' }}>
-	            <input 
-	              type="text" 
-	              placeholder="Full Name"
-	              required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-	              style={{
-	                width: '100%',
-	                background: 'transparent',
-	                border: 'none',
-	                borderBottom: '2px solid #000000',
-	                padding: '16px 0',
-	                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-	                fontSize: '24px',
-	                color: '#000000',
-	                borderRadius: 0,
-	                outline: 'none'
-	              }}
-	            />
-	          </div>
-	          <div style={{ position: 'relative' }}>
-	            <input 
-	              type="text" 
-	              placeholder="Business Name (Optional)"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-	              style={{
-	                width: '100%',
-	                background: 'transparent',
-	                border: 'none',
-	                borderBottom: '2px solid #000000',
-	                padding: '16px 0',
-	                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-	                fontSize: '24px',
-	                color: '#000000',
-	                borderRadius: 0,
-	                outline: 'none'
-	              }}
-	            />
-	          </div>
-	          <div style={{ position: 'relative' }}>
-	            <input 
-	              type="text" 
-	              placeholder="Project Type" 
-	              required
-                value={projectType}
-                onChange={(e) => setProjectType(e.target.value)}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #000000',
-                padding: '16px 0',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                fontSize: '24px',
-                color: '#000000',
-                borderRadius: 0,
-                outline: 'none'
-              }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="text" 
-              placeholder="Estimated Budget" 
-              required
-              value={estimatedBudget}
-              onChange={(e) => setEstimatedBudget(e.target.value)}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #000000',
-                padding: '16px 0',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                fontSize: '24px',
-                color: '#000000',
-                borderRadius: 0,
-                outline: 'none'
-              }}
-            />
-          </div>
-
-          <button 
-            type="submit"
-            disabled={isSubmitting}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              textAlign: 'left',
-              fontSize: '28px',
-              fontWeight: 400,
-              cursor: isSubmitting ? 'default' : 'pointer',
-              padding: '20px 0',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              transition: 'color 0.2s',
-              color: '#000000',
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              opacity: isSubmitting ? 0.6 : 1
-            }}
-          >
-            Submit Inquiry <span>→</span>
-          </button>
-          {!!submitError && (
-            <p style={{ marginTop: '-20px', fontSize: '13px', color: '#FF4500' }}>
-              {submitError}
-            </p>
-          )}
-	        </form>
-      </section>
-    </>
-  );
-};
-
-const AboutPage = ({ aboutHeadline, aboutHighlight, aboutBody, aboutSectors, aboutCapabilities }) => {
-  const navigate = useNavigate();
-  const defaultParagraphs = [
-    'We are a multidisciplinary team of architects, interior designers, and technologists with extensive experience creating high-fidelity 3D visualizations for leading design firms, real estate developers, and cultural institutions worldwide.',
-    "After years working with major agencies, we recognized a gap: exceptional architectural visualization remained inaccessible to emerging designers, independent practices, and smaller studios who couldn't justify the traditional cost and turnaround time.",
-    'So we built a streamlined process—combining deep technical expertise with efficient workflows—to deliver photorealistic presentation imagery at a fraction of the industry standard. Our mission is to democratize access to world-class visualization, empowering a broader community of design enthusiasts to communicate their vision with clarity and impact.',
-    "Whether you're pitching to clients, submitting for permits, or building your portfolio, we're here to make professional-grade rendering fast, affordable, and straightforward."
-  ];
-  const paragraphText = (aboutBody && aboutBody.trim().length > 0)
-    ? aboutBody
-    : defaultParagraphs.join('\n\n');
-  const paragraphs = paragraphText
-    .split(/\n\s*\n/g)
-    .map((p) => p.trim())
-    .filter(Boolean);
-  const splitLines = (text) =>
-    String(text || '')
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
-  const defaultSectors = [
-    'Residential Architecture',
-    'Commercial Real Estate',
-    'Interior Design Studios',
-    'Urban Development',
-    'Hospitality & Retail'
-  ];
-  const defaultCapabilities = [
-    'Photorealistic Rendering',
-    'Material & Lighting Simulation',
-    'Site Context Integration',
-    'Entourage & Atmosphere',
-    'Rapid Turnaround Workflow'
-  ];
-  const sectors = splitLines(aboutSectors);
-  const capabilities = splitLines(aboutCapabilities);
-
-  return (
-    <>
-      <div 
-        onClick={() => navigate('/')}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          marginBottom: '24px',
-          opacity: 0.6,
-          cursor: 'pointer'
-        }}
-      >
-        ← Back to Home
-      </div>
-      
-      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
-        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
-          {(aboutHeadline || 'Who We Are /').trim()} <span style={{ color: '#FF4500' }}>{aboutHighlight || 'About'}</span>
-        </h2>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '40px', border: 'none' }} />
-        
-        <div style={{ fontSize: '20px', lineHeight: 1.7, marginBottom: '60px' }}>
-          {paragraphs.map((paragraph, index) => (
-            <p
-              key={`${index}-${paragraph.slice(0, 12)}`}
-              style={{
-                marginBottom: index === paragraphs.length - 1 ? 0 : '32px',
-                opacity: index === paragraphs.length - 1 ? 0.7 : 1
-              }}
-            >
-              {paragraph}
-            </p>
-          ))}
-        </div>
-
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '60px 0 40px 0', border: 'none' }} />
-        <h3 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '32px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Our Experience</h3>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-          <div>
-            <h4 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em', color: '#FF4500' }}>Sectors</h4>
-            <ul style={{ listStyle: 'none', fontSize: '16px', lineHeight: 2 }}>
-              {(sectors.length > 0 ? sectors : defaultSectors).map((item) => (
-                <li key={item}>• {item}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '0.05em', color: '#FF4500' }}>Capabilities</h4>
-            <ul style={{ listStyle: 'none', fontSize: '16px', lineHeight: 2 }}>
-              {(capabilities.length > 0 ? capabilities : defaultCapabilities).map((item) => (
-                <li key={item}>• {item}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-};
-
-const PortfolioPage = ({ items }) => {
-  const navigate = useNavigate();
-
-  return (
-    <>
-      <div 
-        onClick={() => navigate('/')}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          marginBottom: '24px',
-          opacity: 0.6,
-          cursor: 'pointer'
-        }}
-      >
-        ← Back to Services
-      </div>
-      
-      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
-        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
-          Selected Works / <span style={{ color: '#FF4500' }}>Portfolio</span><br />
-          <span style={{ fontSize: '0.7em', opacity: 0.7 }}>Exploring the intersection of light, material, and geometric form.</span>
-        </h2>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '64px', border: 'none' }} />
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
-          {items.map((item, index) => (
-            <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{
-                aspectRatio: '16/9',
-                backgroundColor: '#E0E0E0',
-                width: '100%',
-                position: 'relative',
-                overflow: 'hidden',
-                backgroundImage: `url('${item.image}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}></div>
-              <div data-portfolio-row style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'flex-end', gap: 20 }}>
-                <div>
-                  <div data-portfolio-title style={{ fontSize: '24px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
-                    {item.title}
-                  </div>
-                  <div data-portfolio-meta style={{ display: 'flex', gap: '24px', fontSize: '12px', textTransform: 'uppercase', opacity: 0.6, marginTop: '8px', flexWrap: 'wrap' }}>
-                    <span data-portfolio-pill style={{ color: '#FF4500', fontWeight: 800 }}>{item.tag}</span>
-                    <span data-portfolio-pill>Location: {item.location}</span>
-                    <span data-portfolio-pill>Render Time: {item.renderTime}</span>
-                  </div>
-                </div>
-                <Link
-                  to={`/portfolio/${item.slug}`}
-                  style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                  <div data-portfolio-cta style={{ fontSize: '16px', fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6 }}>
-                    VIEW PROJECT <span>→</span>
-                  </div>
-                </Link>
-              </div>
-              <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', opacity: 0.1, margin: 0, border: 'none' }} />
-            </div>
-          ))}
-        </div>
-      </section>
-    </>
-  );
-};
-
-const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceName }) => {
-  const navigate = useNavigate();
-  const [submitError, setSubmitError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [projectInfo, setProjectInfo] = useState('');
-  const [projectFiles, setProjectFiles] = useState([]);
-
-  const proceedLabel = 'Checkout';
-  const buttonLabel = isSubmitting ? 'Submitting…' : proceedLabel;
-
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setSubmitError('');
-
-    try {
-      const supabase = getSupabaseBrowser();
-
-      const projectRes = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, fullName, businessName, serviceName, projectInfo })
-      });
-      if (!projectRes.ok) {
-        const apiError = await readApiError(projectRes);
-        throw new Error(`Failed to create project (${projectRes.status})${apiError ? `: ${apiError}` : ''}`);
-      }
-      const { projectId } = await projectRes.json();
-
-      if (projectFiles.length > 0) {
-        const uploadedFiles = [];
-
-        for (const file of projectFiles) {
-          const signRes = await fetch('/api/uploads/sign', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId, originalName: file.name, contentType: file.type })
-          });
-          if (!signRes.ok) {
-            const apiError = await readApiError(signRes);
-            throw new Error(`Failed to prepare upload (${signRes.status})${apiError ? `: ${apiError}` : ''}`);
-          }
-          const { upload } = await signRes.json();
-
-          const { data, error } = await supabase.storage
-            .from(upload.bucket)
-            .uploadToSignedUrl(upload.path, upload.token, file, {
-              contentType: file.type || 'application/octet-stream'
-            });
-
-          if (error) {
-            throw new Error(error.message);
-          }
-
-          uploadedFiles.push({
-            bucket: upload.bucket,
-            path: data?.path || upload.path,
-            originalName: file.name,
-            contentType: file.type || null,
-            sizeBytes: file.size
-          });
-        }
-
-        const recordRes = await fetch(`/api/projects/${projectId}/files`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ files: uploadedFiles })
-        });
-        if (!recordRes.ok) {
-          const apiError = await readApiError(recordRes);
-          throw new Error(`Failed to record uploaded files (${recordRes.status})${apiError ? `: ${apiError}` : ''}`);
-        }
-      }
-
-      const checkoutRes = await fetch('/api/checkout/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId })
-      });
-      if (!checkoutRes.ok) {
-        const apiError = await readApiError(checkoutRes);
-        throw new Error(`Checkout failed (${checkoutRes.status})${apiError ? `: ${apiError}` : ''}`);
-      }
-      const { url } = await checkoutRes.json();
-      window.location.assign(url);
-    } catch (error) {
-      setSubmitError(error?.message || 'Something went wrong submitting your project.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <>
-      <div 
-        onClick={() => navigate('/')}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          marginBottom: '24px',
-          opacity: 0.6,
-          cursor: 'pointer'
-        }}
-      >
-        ← Back to Services
-      </div>
-      
-      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
-        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
-          {title} / <span style={{ color: '#FF4500' }}>${price}</span><br />
-          <span style={{ fontSize: '0.7em', opacity: 0.7 }}>{subtitle}</span>
-        </h2>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
-        
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '40px', marginBottom: '40px' }}>
-          <div>
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: 800, letterSpacing: '0.05em' }}>What's Included</h3>
-            <ul style={{ listStyle: 'none' }}>
-              {includes.map((item, index) => (
-                <li key={index} style={{ fontSize: '18px', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.1)', display: 'flex', alignItems: 'start' }}>
-                  <span style={{ color: '#FF4500', marginRight: '12px' }}>•</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <div>
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: 800, letterSpacing: '0.05em' }}>The Process</h3>
-            {process.map((step, index) => (
-              <div key={index} style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-                <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <div>
-                  <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>{step.title}</strong>
-                  <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>{step.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
-        <h3 style={{ fontWeight: 900, fontSize: '24px', marginTop: '40px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-          Book {title}
-        </h3>
-        
-	        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: 0 }}>
-	          <div style={{ position: 'relative' }}>
-	            <input 
-	              type="email" 
-	              placeholder="Email Address" 
-	              required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-	              style={{
-	                width: '100%',
-	                background: 'transparent',
-	                border: 'none',
-	                borderBottom: '2px solid #000000',
-	                padding: '16px 0',
-	                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-	                fontSize: '24px',
-	                color: '#000000',
-	                borderRadius: 0,
-	                outline: 'none'
-	              }}
-	            />
-	          </div>
-            <div style={{ position: 'relative' }}>
-              <input 
-                type="text" 
-                placeholder="Full Name"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: '2px solid #000000',
-                  padding: '16px 0',
-                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                  fontSize: '24px',
-                  color: '#000000',
-                  borderRadius: 0,
-                  outline: 'none'
-                }}
-              />
-            </div>
-            <div style={{ position: 'relative' }}>
-              <input 
-                type="text" 
-                placeholder="Business Name (Optional)"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: '2px solid #000000',
-                  padding: '16px 0',
-                  fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                  fontSize: '24px',
-                  color: '#000000',
-                  borderRadius: 0,
-                  outline: 'none'
-                }}
-              />
-            </div>
-	          <div style={{ position: 'relative' }}>
-	            <input 
-	              type="text" 
-	              value={`${title} ($${price})`}
-	              readOnly
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #000000',
-                padding: '16px 0',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                fontSize: '24px',
-                color: '#000000',
-                borderRadius: 0,
-                outline: 'none',
-                opacity: 0.6
-              }}
-            />
-          </div>
-	          <div style={{ position: 'relative' }}>
-	            <input 
-	              type="text" 
-	              placeholder={serviceName === 'residential-exterior' ? 'Project Link / DropBox (Optional)' :
-	                           serviceName === 'residential-interior' ? 'Style Preference (e.g. Minimalist)' :
-	                           serviceName === 'residential-aerial' ? 'Site Location / Address' :
-	                           serviceName === 'commercial-exterior' ? 'Development Name / Brand' :
-	                           serviceName === 'commercial-interior' ? 'Square Footage' :
-	                           serviceName === '3d-model' ? 'Preferred Output Format (SKP, DWG, or 3DS)' :
-	                           'Campus / Site Address'}
-                value={projectInfo}
-                onChange={(e) => setProjectInfo(e.target.value)}
-	              style={{
-	                width: '100%',
-	                background: 'transparent',
-	                border: 'none',
-	                borderBottom: '2px solid #000000',
-                padding: '16px 0',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                fontSize: '24px',
-                color: '#000000',
-                borderRadius: 0,
-                outline: 'none'
-              }}
-            />
-          </div>
-
-          <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '20px 0', border: 'none' }} />
-	          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-	            Project Files
-	          </h3>
-	          
-	          <FileUpload
-              id={`files-${serviceName}`}
-              onFilesChange={setProjectFiles}
-            />
-
-          <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '20px 0', border: 'none' }} />
-	          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-	            Checkout
-	          </h3>
-	          <p style={{ fontSize: '16px', lineHeight: 1.6, opacity: 0.7, marginTop: '-12px' }}>
-              Taxes are calculated at checkout.
-            </p>
-
-	          <div style={{ marginTop: '40px', padding: '24px', border: '2px solid #000000' }}>
-	            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-	              <span style={{ fontWeight: 500 }}>{title} (4K)</span>
-              <span>${price}</span>
-            </div>
-            <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', opacity: 0.2, margin: '16px 0', border: 'none' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 600 }}>
-              <span>Total</span>
-              <span style={{ color: '#FF4500' }}>${price}</span>
-            </div>
-          </div>
-
-	          <button 
-	            type="submit"
-              disabled={isSubmitting}
-	            style={{
-	              background: 'transparent',
-	              border: '2px solid #000000',
-	              textAlign: 'center',
-	              fontSize: '28px',
-	              fontWeight: 400,
-	              cursor: isSubmitting ? 'default' : 'pointer',
-	              padding: '24px',
-	              display: 'flex',
-	              alignItems: 'center',
-	              justifyContent: 'center',
-	              gap: '10px',
-	              transition: 'color 0.2s',
-	              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-	              marginTop: '32px',
-	              width: '100%',
-                opacity: isSubmitting ? 0.6 : 1
-	            }}
-	          >
-	            {buttonLabel} <span>→</span>
-	          </button>
-            {!!submitError && (
-              <p style={{ marginTop: '12px', fontSize: '13px', color: '#FF4500' }}>
-                {submitError}
-              </p>
-            )}
-	        </form>
-	      </section>
-	    </>
-  );
-};
-
-const CUSTOM_SERVICES = [
-  { key: 'residential-exterior', title: 'Residential Exterior', tag: '24H Turnaround' },
-  { key: 'residential-interior', title: 'Residential Interior', tag: 'Living Spaces' },
-  { key: 'residential-aerial', title: 'Residential Aerial', tag: 'Neighborhood View' },
-  { key: 'commercial-exterior', title: 'Commercial Exterior', tag: 'Office/Retail' },
-  { key: 'commercial-interior', title: 'Commercial Interior', tag: 'Office/Retail' },
-  { key: 'commercial-aerial', title: 'Commercial Aerial', tag: 'Campus View' },
-  { key: '3d-model', title: '3D Model', tag: 'SKP / DWG / 3DS' }
-];
-
-const CustomProjectPage = ({ servicePrices }) => {
-  const navigate = useNavigate();
-  const [selectedServices, setSelectedServices] = useState(new Set());
-  const [submitError, setSubmitError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [projectInfo, setProjectInfo] = useState('');
-  const [projectFiles, setProjectFiles] = useState([]);
-
-  const toggleService = (key) => {
-    setSelectedServices(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
-
-  const selectedList = [...selectedServices];
-  const total = selectedList.reduce((sum, key) => sum + (servicePrices[key] || 0), 0);
-
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-    if (selectedServices.size === 0) {
-      setSubmitError('Please select at least one service before checking out.');
-      return;
-    }
-    setIsSubmitting(true);
-    setSubmitError('');
-
-    try {
-      const supabase = getSupabaseBrowser();
-
-      const projectRes = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, fullName, businessName, serviceName: 'custom', selectedServices: selectedList, projectInfo })
-      });
-      if (!projectRes.ok) {
-        const apiError = await readApiError(projectRes);
-        throw new Error(`Failed to create project (${projectRes.status})${apiError ? `: ${apiError}` : ''}`);
-      }
-      const { projectId } = await projectRes.json();
-
-      if (projectFiles.length > 0) {
-        const uploadedFiles = [];
-        for (const file of projectFiles) {
-          const signRes = await fetch('/api/uploads/sign', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId, originalName: file.name, contentType: file.type })
-          });
-          if (!signRes.ok) {
-            const apiError = await readApiError(signRes);
-            throw new Error(`Failed to prepare upload (${signRes.status})${apiError ? `: ${apiError}` : ''}`);
-          }
-          const { upload } = await signRes.json();
-          const { data, error } = await supabase.storage
-            .from(upload.bucket)
-            .uploadToSignedUrl(upload.path, upload.token, file, {
-              contentType: file.type || 'application/octet-stream'
-            });
-          if (error) throw new Error(error.message);
-          uploadedFiles.push({
-            bucket: upload.bucket,
-            path: data?.path || upload.path,
-            originalName: file.name,
-            contentType: file.type || null,
-            sizeBytes: file.size
-          });
-        }
-        const recordRes = await fetch(`/api/projects/${projectId}/files`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ files: uploadedFiles })
-        });
-        if (!recordRes.ok) {
-          const apiError = await readApiError(recordRes);
-          throw new Error(`Failed to record uploaded files (${recordRes.status})${apiError ? `: ${apiError}` : ''}`);
-        }
-      }
-
-      const checkoutRes = await fetch('/api/checkout/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId })
-      });
-      if (!checkoutRes.ok) {
-        const apiError = await readApiError(checkoutRes);
-        throw new Error(`Checkout failed (${checkoutRes.status})${apiError ? `: ${apiError}` : ''}`);
-      }
-      const { url } = await checkoutRes.json();
-      window.location.assign(url);
-    } catch (error) {
-      setSubmitError(error?.message || 'Something went wrong submitting your project.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const inputStyle = {
-    width: '100%',
-    background: 'transparent',
-    border: 'none',
-    borderBottom: '2px solid #000000',
-    padding: '16px 0',
-    fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-    fontSize: '24px',
-    color: '#000000',
-    borderRadius: 0,
-    outline: 'none'
-  };
-
-  return (
-    <>
-      <div
-        onClick={() => navigate('/')}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          marginBottom: '24px',
-          opacity: 0.6,
-          cursor: 'pointer'
-        }}
-      >
-        ← Back to Services
-      </div>
-
-      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', marginBottom: '32px', border: 'none' }} />
-        <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '40px' }}>
-          Build Your Own / <span style={{ color: '#FF4500' }}>Custom Bundle</span><br />
-          <span style={{ fontSize: '0.7em', opacity: 0.7 }}>Mix and match services to create your perfect rendering package.</span>
-        </h2>
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: 0, border: 'none' }} />
-
-        <h3 style={{ fontSize: '14px', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em', margin: '40px 0 8px 0' }}>
-          Select Your Renders
-        </h3>
-        <p style={{ fontSize: '16px', opacity: 0.7, margin: '0 0 20px 0', lineHeight: 1.5 }}>
-          Click + Add on any services you'd like included in your project.
-        </p>
-
-        {CUSTOM_SERVICES.map(service => (
-          <SelectableServiceRow
-            key={service.key}
-            price={servicePrices[service.key]}
-            title={service.title}
-            tag={service.tag}
-            selected={selectedServices.has(service.key)}
-            onToggle={() => toggleService(service.key)}
-          />
-        ))}
-
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '60px 0 0 0', border: 'none' }} />
-        <h3 style={{ fontWeight: 900, fontSize: '24px', marginTop: '40px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-          Book Your Bundle
-        </h3>
-
-        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-          <div style={{ position: 'relative' }}>
-            <input type="email" placeholder="Email Address" required value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <input type="text" placeholder="Full Name" required value={fullName} onChange={e => setFullName(e.target.value)} style={inputStyle} />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <input type="text" placeholder="Business Name (Optional)" value={businessName} onChange={e => setBusinessName(e.target.value)} style={inputStyle} />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <input type="text" placeholder="Project Notes (Style, location, references, etc.)" value={projectInfo} onChange={e => setProjectInfo(e.target.value)} style={inputStyle} />
-          </div>
-
-          <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '20px 0', border: 'none' }} />
-          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-            Project Files
-          </h3>
-          <FileUpload id="files-custom" onFilesChange={setProjectFiles} />
-
-          <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '20px 0', border: 'none' }} />
-          <h3 style={{ fontWeight: 900, fontSize: '20px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '-0.04em' }}>
-            Checkout
-          </h3>
-          <p style={{ fontSize: '16px', lineHeight: 1.6, opacity: 0.7, marginTop: '-12px' }}>
-            Taxes are calculated at checkout.
-          </p>
-
-          <div style={{ marginTop: '40px', padding: '24px', border: `2px solid ${selectedServices.size > 0 ? '#000000' : 'rgba(0,0,0,0.2)'}`, transition: 'border-color 0.2s' }}>
-            {selectedServices.size === 0 ? (
-              <p style={{ fontSize: '16px', opacity: 0.5, textAlign: 'center', padding: '16px 0', margin: 0 }}>
-                No services selected yet — choose above to see your total.
-              </p>
-            ) : (
-              <>
-                {selectedList.map(key => {
-                  const svc = CUSTOM_SERVICES.find(s => s.key === key);
-                  return (
-                    <div key={key} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                      <span style={{ fontWeight: 500 }}>{svc?.title} (4K)</span>
-                      <span>${servicePrices[key]}</span>
-                    </div>
-                  );
-                })}
-                <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', opacity: 0.2, margin: '16px 0', border: 'none' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 600 }}>
-                  <span>Total</span>
-                  <span style={{ color: '#FF4500' }}>${total}</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting || selectedServices.size === 0}
-            style={{
-              background: 'transparent',
-              border: '2px solid #000000',
-              textAlign: 'center',
-              fontSize: '28px',
-              fontWeight: 400,
-              cursor: (isSubmitting || selectedServices.size === 0) ? 'default' : 'pointer',
-              padding: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              transition: 'color 0.2s',
-              fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-              marginTop: '32px',
-              width: '100%',
-              opacity: (isSubmitting || selectedServices.size === 0) ? 0.5 : 1
-            }}
-          >
-            {isSubmitting ? 'Submitting…' : 'Checkout'} <span>→</span>
-          </button>
-          {!!submitError && (
-            <p style={{ marginTop: '12px', fontSize: '13px', color: '#FF4500' }}>
-              {submitError}
-            </p>
-          )}
-        </form>
-      </section>
-    </>
-  );
-};
-
-const PortfolioDetailPage = ({ items }) => {
-  const navigate = useNavigate();
-  const { slug } = useParams();
-  const item = items.find((entry) => entry.slug === slug);
-  const images = Array.isArray(item?.images) && item.images.length > 0
-    ? item.images
-    : (item?.image ? [item.image] : []);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const touchStart = React.useRef({ x: 0, y: 0, time: 0 });
-  const touchDelta = React.useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [slug]);
-
-  if (!item) {
-    return (
-      <>
-        <div
-          onClick={() => navigate('/portfolio')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            marginBottom: '24px',
-            opacity: 0.6,
-            cursor: 'pointer'
-          }}
-        >
-          ← Back to Portfolio
-        </div>
-        <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '20px' }}>
-            Project Not Found
-          </h2>
-          <p style={{ fontSize: '18px', opacity: 0.7 }}>
-            The project you're looking for doesn’t exist. Return to the portfolio to browse available work.
-          </p>
-        </section>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div
-        onClick={() => navigate('/portfolio')}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          marginBottom: '24px',
-          opacity: 0.6,
-          cursor: 'pointer'
-        }}
-      >
-        ← Back to Portfolio
-      </div>
-
-      <section style={{ marginBottom: '80px', animation: 'fadeIn 0.5s ease-out' }}>
-        <div
-          onTouchStart={(e) => {
-            const touch = e.touches[0];
-            touchStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-            touchDelta.current = { x: 0, y: 0 };
-          }}
-          onTouchMove={(e) => {
-            const touch = e.touches[0];
-            touchDelta.current = {
-              x: touch.clientX - touchStart.current.x,
-              y: touch.clientY - touchStart.current.y
-            };
-          }}
-          onTouchEnd={() => {
-            if (images.length < 2) return;
-            const { x, y } = touchDelta.current;
-            const absX = Math.abs(x);
-            const absY = Math.abs(y);
-            if (absX < 40 || absX < absY) return;
-            if (x < 0) {
-              setActiveIndex((prev) => (prev + 1) % images.length);
-            } else {
-              setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
-            }
-          }}
-          style={{
-          aspectRatio: '16/9',
-          backgroundColor: '#E0E0E0',
-          width: '100%',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          {images.length > 0 ? (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundImage: `url('${images[Math.min(activeIndex, images.length - 1)]}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                transition: 'opacity 0.2s ease'
-              }}
-            />
-          ) : null}
-          {images.length > 1 ? (
-            <>
-              <button
-                type="button"
-                data-carousel-button="prev"
-                onClick={() => setActiveIndex((prev) => (prev - 1 + images.length) % images.length)}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: 12,
-                  transform: 'translateY(-50%)',
-                  border: '2px solid #000000',
-                  background: 'rgba(255,255,255,0.85)',
-                  padding: '10px 14px',
-                  cursor: 'pointer',
-                  fontSize: 16,
-                  color: '#000000',
-                  WebkitAppearance: 'none',
-                  appearance: 'none'
-                }}
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                data-carousel-button="next"
-                onClick={() => setActiveIndex((prev) => (prev + 1) % images.length)}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: 12,
-                  transform: 'translateY(-50%)',
-                  border: '2px solid #000000',
-                  background: 'rgba(255,255,255,0.85)',
-                  padding: '10px 14px',
-                  cursor: 'pointer',
-                  fontSize: 16,
-                  color: '#000000',
-                  WebkitAppearance: 'none',
-                  appearance: 'none'
-                }}
-              >
-                →
-              </button>
-              <div style={{ position: 'absolute', left: '50%', bottom: 12, transform: 'translateX(-50%)', display: 'flex', gap: 8 }}>
-                {images.map((_, idx) => (
-                  <button
-                    key={`dot-${idx}`}
-                    type="button"
-                    data-carousel-dot
-                    onClick={() => setActiveIndex(idx)}
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      border: '1px solid #000000',
-                      background: idx === activeIndex ? '#000000' : 'rgba(255,255,255,0.8)',
-                      cursor: 'pointer'
-                    }}
-                  />
-                ))}
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        <div style={{ marginTop: '40px' }}>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '16px' }}>
-            {item.title}
-          </h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', fontSize: '12px', textTransform: 'uppercase', opacity: 0.7 }}>
-            <span style={{ color: '#FF4500', fontWeight: 800 }}>{item.tag}</span>
-            <span>Location: {item.location}</span>
-            <span>Render Time: {item.renderTime}</span>
-          </div>
-          <p style={{ fontSize: '20px', lineHeight: 1.7, marginTop: '24px', maxWidth: '900px' }}>
-            {item.brief}
-          </p>
-        </div>
-
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px 0', border: 'none' }} />
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-          <div>
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>Project Scope</h3>
-            <p style={{ fontSize: '18px', lineHeight: 1.6, opacity: 0.8 }}>{item.scope}</p>
-
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginTop: '32px', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>Deliverables</h3>
-            <ul style={{ listStyle: 'none', fontSize: '16px', lineHeight: 2 }}>
-              {item.deliverables.map((deliverable, index) => (
-                <li key={index}>
-                  <span style={{ color: '#FF4500', marginRight: '8px', fontWeight: 'bold' }}>→</span>
-                  {deliverable}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>Pipeline</h3>
-            {item.timeline.map((step, index) => (
-              <div key={index} style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-                <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <div>
-                  <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>{step.title}</strong>
-                  <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>{step.description}</p>
-                </div>
-              </div>
-            ))}
-
-            <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginTop: '32px', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>Tools</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              {item.tools.map((tool) => (
-                <span key={tool} style={{ padding: '8px 12px', border: '1px solid #000000', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {tool}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px 0', border: 'none' }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px' }}>
-          <div>
-            <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-              Interested in a similar project?
-            </h3>
-            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>
-              Tell us about your project and we’ll recommend the right rendering package.
-            </p>
-          </div>
-          <Link to="/#contact" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div
-              style={{
-                background: 'transparent',
-                border: '2px solid #000000',
-                textAlign: 'center',
-                fontSize: '18px',
-                fontWeight: 400,
-                cursor: 'pointer',
-                padding: '16px 24px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                transition: 'color 0.2s',
-                fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Start a Project <span>→</span>
-            </div>
-          </Link>
-        </div>
-      </section>
-    </>
-  );
-};
-
-const ConfirmationPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const paymentMethod = location?.state?.paymentMethod;
-  const serviceTitle = location?.state?.title;
-  const servicePrice = location?.state?.price;
-  const searchParams = new URLSearchParams(location?.search || '');
-  const stripeSessionId = searchParams.get('session_id');
-  const [stripeSessionStatus, setStripeSessionStatus] = useState(null);
-
-  useEffect(() => {
-    if (!stripeSessionId) {
-      return;
-    }
-    let cancelled = false;
-    const loadStatus = async () => {
-      try {
-        const res = await fetch(`/api/checkout/session-status?session_id=${encodeURIComponent(stripeSessionId)}`);
-        if (!res.ok) {
-          return;
-        }
-        const data = await res.json();
-        if (!cancelled) {
-          setStripeSessionStatus(data?.session?.payment_status || null);
-        }
-      } catch (error) {
-        // ignore
-      }
-    };
-    loadStatus();
-    return () => {
-      cancelled = true;
-    };
-  }, [stripeSessionId]);
-
-  return (
-    <section style={{ textAlign: 'center', padding: '20px 20px 80px 20px', animation: 'fadeIn 0.5s ease-out' }}>
-      <div style={{ fontSize: '64px', marginBottom: '32px' }}>✓</div>
-      <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '20px' }}>
-        {paymentMethod === 'wire-transfer' ? 'Wire Transfer Started' : 'Order Confirmed'}
-      </h2>
-      <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px auto', maxWidth: '400px', border: 'none' }} />
-      <p style={{ fontSize: '20px', lineHeight: 1.6, opacity: 0.8, marginBottom: '40px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
-        {paymentMethod === 'wire-transfer'
-          ? 'We’ve saved your request. Send your wire using the details below to kick off production.'
-          : "Thank you for your order. We've received your project details and will begin work immediately."}
-      </p>
-
-      {!!stripeSessionId && (
-        <p style={{ fontSize: '14px', opacity: 0.6, marginBottom: '16px' }}>
-          Payment status: {stripeSessionStatus || 'checking…'}
-        </p>
-      )}
-
-      {paymentMethod === 'wire-transfer' && (
-        <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '24px', margin: '24px auto 40px auto', textAlign: 'left', maxWidth: '680px' }}>
-          <h3 style={{ fontSize: '14px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 800, letterSpacing: '0.05em' }}>
-            Wire Details
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px 16px', fontSize: '16px', lineHeight: 1.6, opacity: 0.9 }}>
-            <span style={{ fontWeight: 600 }}>Bank Name</span>
-            <span>YOUR BANK NAME</span>
-            <span style={{ fontWeight: 600 }}>Account Name</span>
-            <span>RENDER AI LLC</span>
-            <span style={{ fontWeight: 600 }}>Routing</span>
-            <span>XXXXXX</span>
-            <span style={{ fontWeight: 600 }}>Account</span>
-            <span>XXXXXX</span>
-            <span style={{ fontWeight: 600 }}>SWIFT</span>
-            <span>XXXXXX</span>
-            <span style={{ fontWeight: 600 }}>Memo</span>
-            <span>{serviceTitle ? `${serviceTitle}${servicePrice ? ` ($${servicePrice})` : ''}` : 'Your project name'}</span>
-          </div>
-          <p style={{ marginTop: '16px', fontSize: '14px', opacity: 0.7 }}>
-            Reply to your confirmation email if you need a secure portal link.
-          </p>
-        </div>
-      )}
-	      
-      <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '40px', margin: '40px 0', textAlign: 'left' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '24px', letterSpacing: '0.05em' }}>
-          What Happens Next
-        </h3>
-        
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>01</span>
-          <div>
-            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Confirmation Email</strong>
-            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>You'll receive an order confirmation with project details within 5 minutes.</p>
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>02</span>
-          <div>
-            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Project Kickoff</strong>
-            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>Our team will review your files and reach out if we need any clarifications.</p>
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>03</span>
-          <div>
-            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Progress Updates</strong>
-            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>We'll email you with progress updates and draft previews throughout the process.</p>
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>04</span>
-          <div>
-            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Final Delivery</strong>
-            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>High-resolution files will be delivered via email within the turnaround time.</p>
-          </div>
-        </div>
-      </div>
-
-      <p style={{ fontSize: '16px', opacity: 0.6, marginBottom: '40px' }}>
-        Questions? Email us at <span style={{ color: '#FF4500', fontWeight: 600 }}>hello@renderai.lol</span>
-      </p>
-
-      <button 
-        onClick={() => navigate('/')}
-        style={{
-          background: 'transparent',
-          border: 'none',
-          textAlign: 'center',
-          fontSize: '18px',
-          fontWeight: 400,
-          cursor: 'pointer',
-          padding: '20px 0',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '10px',
-          transition: 'color 0.2s',
-          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-          margin: '0 auto'
-        }}
-      >
-        <span>←</span> Back to Services
-      </button>
-    </section>
-  );
-};
-
-const InquiryConfirmationPage = () => {
-  const navigate = useNavigate();
-
-  return (
-    <section style={{ textAlign: 'center', padding: '80px 20px', animation: 'fadeIn 0.5s ease-out' }}>
-      <div style={{ fontSize: '64px', marginBottom: '32px' }}>✓</div>
-      <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 400, lineHeight: 1.2, marginBottom: '20px' }}>
-        Inquiry Received
-      </h2>
-      <hr style={{ width: '100%', height: '2px', backgroundColor: '#000000', margin: '40px auto', maxWidth: '400px', border: 'none' }} />
-      <p style={{ fontSize: '20px', lineHeight: 1.6, opacity: 0.8, marginBottom: '40px', maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' }}>
-        Thanks for reaching out. We’ll review your details and get back to you as soon as possible.
-      </p>
-
-      <div style={{ backgroundColor: 'rgba(0,0,0,0.02)', padding: '40px', margin: '40px 0', textAlign: 'left' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '24px', letterSpacing: '0.05em' }}>
-          What Happens Next
-        </h3>
-
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>01</span>
-          <div>
-            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>We Review Your Inquiry</strong>
-            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>Our team will review your project details and determine the best package.</p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>02</span>
-          <div>
-            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>We Follow Up</strong>
-            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>We’ll reach out with a timeline, cost, and any clarifying questions.</p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <span style={{ fontFamily: 'monospace', color: '#FF4500', fontWeight: 'bold', fontSize: '14px', paddingTop: '4px' }}>03</span>
-          <div>
-            <strong style={{ display: 'block', marginBottom: '4px', fontSize: '18px' }}>Kickoff</strong>
-            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: 1.4 }}>Once approved, we’ll start production and share the first draft.</p>
-          </div>
-        </div>
-      </div>
-
-      <p style={{ fontSize: '16px', opacity: 0.6, marginBottom: '40px' }}>
-        Need to add more details? Email us at <span style={{ color: '#FF4500', fontWeight: 600 }}>hello@renderai.lol</span>
-      </p>
-
-      <button
-        onClick={() => navigate('/')}
-        style={{
-          background: 'transparent',
-          border: 'none',
-          textAlign: 'center',
-          fontSize: '18px',
-          fontWeight: 400,
-          cursor: 'pointer',
-          padding: '20px 0',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '10px',
-          transition: 'color 0.2s',
-          fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-          margin: '0 auto'
-        }}
-      >
-        <span>←</span> Back to Home
-      </button>
-    </section>
-  );
-};
 
 const ScrollToHash = () => {
   const { hash } = useLocation();
@@ -1926,94 +278,401 @@ const AppFrame = ({ portfolioItems, siteCopy, servicePrices }) => {
         <Header compact={isInquiry} />
         
         <AppErrorBoundary>
+          <React.Suspense fallback={null}>
           <Routes>
             <Route
               path="/"
               element={
-                <HomePage
-                  servicePrices={servicePrices}
-                  heroHeadline={siteCopy['home.hero_headline']}
-                  heroSubheadline={siteCopy['home.hero_subheadline']}
-                  contactHeadline={siteCopy['contact.headline']}
-                  contactSubheadline={siteCopy['contact.subheadline']}
-                />
+                <>
+                  <PageMeta
+                    title="Render AI | Photorealistic Architectural Renderings & 3D Visualization"
+                    description="Professional architectural rendering services based in New York. Residential & commercial exteriors, interiors, aerial views, and 3D models. Fast turnaround, photorealistic results."
+                    canonical="/"
+                    jsonLd={{
+                      '@context': 'https://schema.org',
+                      '@graph': [
+                        {
+                          '@type': 'LocalBusiness',
+                          name: 'Render AI',
+                          description: 'Professional architectural rendering and 3D visualization services based in New York.',
+                          url: 'https://renderai.lol',
+                          email: 'hello@renderai.lol',
+                          address: { '@type': 'PostalAddress', addressLocality: 'New York', addressRegion: 'NY', addressCountry: 'US' },
+                          priceRange: '$$',
+                          hasOfferCatalog: {
+                            '@type': 'OfferCatalog',
+                            name: 'Architectural Rendering Services',
+                            itemListElement: [
+                              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Residential Exterior Rendering' } },
+                              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Residential Interior Rendering' } },
+                              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Residential Aerial Rendering' } },
+                              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Commercial Exterior Rendering' } },
+                              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Commercial Interior Rendering' } },
+                              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Commercial Aerial Rendering' } },
+                              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: '3D Modeling' } },
+                            ]
+                          }
+                        },
+                        {
+                          '@type': 'WebSite',
+                          name: 'Render AI',
+                          url: 'https://renderai.lol',
+                          potentialAction: {
+                            '@type': 'SearchAction',
+                            target: { '@type': 'EntryPoint', urlTemplate: 'https://renderai.lol/?q={search_term_string}' },
+                            'query-input': 'required name=search_term_string'
+                          }
+                        },
+                        {
+                          '@type': 'FAQPage',
+                          mainEntity: [
+                            {
+                              '@type': 'Question',
+                              name: 'How long does a rendering take?',
+                              acceptedAnswer: { '@type': 'Answer', text: 'Turnaround times vary by service: Residential Exterior renderings are delivered in 24 hours, Residential Interior in 48 hours, Aerial views in 3 days, and Commercial projects in 3–5 days depending on complexity.' }
+                            },
+                            {
+                              '@type': 'Question',
+                              name: 'What file formats do you accept?',
+                              acceptedAnswer: { '@type': 'Answer', text: 'We accept a wide range of architectural file formats including CAD files (.dwg, .dxf), SketchUp (.skp), 3DS Max (.max, .3ds), Revit (.rvt), and standard image files such as PDFs, JPGs, or PNGs of floor plans and elevation drawings.' }
+                            },
+                            {
+                              '@type': 'Question',
+                              name: 'How much does an architectural rendering cost?',
+                              acceptedAnswer: { '@type': 'Answer', text: 'Pricing starts at $500 for residential exterior renderings. Residential interiors start at $750, aerial views at $850, and commercial projects from $850–$950. Custom bundles combining multiple services are also available.' }
+                            },
+                            {
+                              '@type': 'Question',
+                              name: 'Do you work with residential and commercial projects?',
+                              acceptedAnswer: { '@type': 'Answer', text: 'Yes. We provide rendering services for both residential projects (exteriors, interiors, aerial views) and commercial projects (offices, retail, mixed-use developments, campus views). We also offer 3D modeling and fully custom project bundles.' }
+                            },
+                            {
+                              '@type': 'Question',
+                              name: 'Where is Render AI located?',
+                              acceptedAnswer: { '@type': 'Answer', text: 'Render AI is based in New York, NY. We work with architects, interior designers, builders, and real estate developers across the United States.' }
+                            },
+                          ]
+                        }
+                      ]
+                    }}
+                  />
+                  <HomePage
+                    servicePrices={servicePrices}
+                    heroHeadline={siteCopy['home.hero_headline']}
+                    heroSubheadline={siteCopy['home.hero_subheadline']}
+                    contactHeadline={siteCopy['contact.headline']}
+                    contactSubheadline={siteCopy['contact.subheadline']}
+                  />
+                </>
               }
             />
             <Route path="/admin" element={<AdminPage />} />
             <Route
               path="/about"
               element={
-                <AboutPage
-                  aboutHeadline={siteCopy['about.headline']}
-                  aboutHighlight={siteCopy['about.highlight']}
-                  aboutBody={siteCopy['about.body']}
-                  aboutSectors={siteCopy['about.sectors']}
-                  aboutCapabilities={siteCopy['about.capabilities']}
-                />
+                <>
+                  <PageMeta
+                    title="About Render AI | Architectural Visualization Studio, New York"
+                    description="Render AI is a multidisciplinary team of architects, interior designers, and technologists based in New York, dedicated to delivering world-class 3D visualization."
+                    canonical="/about"
+                    jsonLd={{
+                      '@context': 'https://schema.org',
+                      '@type': 'Organization',
+                      name: 'Render AI',
+                      url: 'https://renderai.lol',
+                      email: 'hello@renderai.lol',
+                      foundingLocation: 'New York, NY',
+                      description: 'Multidisciplinary architectural visualization studio.',
+                    }}
+                  />
+                  <AboutPage
+                    aboutHeadline={siteCopy['about.headline']}
+                    aboutHighlight={siteCopy['about.highlight']}
+                    aboutBody={siteCopy['about.body']}
+                    aboutSectors={siteCopy['about.sectors']}
+                    aboutCapabilities={siteCopy['about.capabilities']}
+                  />
+                </>
               }
             />
-            <Route path="/portfolio" element={<PortfolioPage items={portfolioItems} />} />
+            <Route path="/portfolio" element={
+              <>
+                <PageMeta
+                  title="Portfolio | Photorealistic Architectural Renderings | Render AI"
+                  description="Browse our portfolio of high-fidelity architectural renderings and 3D visualizations for residential and commercial projects."
+                  canonical="/portfolio"
+                />
+                <PortfolioPage items={portfolioItems} />
+              </>
+            } />
             <Route path="/portfolio/:slug" element={<PortfolioDetailPage items={portfolioItems} />} />
             <Route path="/residential-exterior" element={
-              <ServiceDetailPage
-                price={servicePrices['residential-exterior']}
-                title="Residential Exterior"
-                serviceName="residential-exterior"
-                {...getServiceContent('residential-exterior')}
-              />
+              <>
+                <PageMeta
+                  title="Residential Exterior Rendering | 24-Hour Turnaround | Render AI"
+                  description="Photorealistic residential exterior 3D renderings with 24-hour turnaround. Perfect for architects, builders, and real estate developers. Starting from $500."
+                  canonical="/residential-exterior"
+                  jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@graph': [
+                      {
+                        '@type': 'Service',
+                        name: 'Residential Exterior Rendering',
+                        provider: { '@type': 'LocalBusiness', name: 'Render AI', url: 'https://renderai.lol' },
+                        description: 'Photorealistic residential exterior 3D renderings with 24-hour turnaround.',
+                        url: 'https://renderai.lol/residential-exterior',
+                        offers: { '@type': 'Offer', price: String(servicePrices['residential-exterior']), priceCurrency: 'USD' },
+                        areaServed: { '@type': 'Country', name: 'United States' },
+                      },
+                      {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://renderai.lol' },
+                          { '@type': 'ListItem', position: 2, name: 'Residential Exterior Rendering', item: 'https://renderai.lol/residential-exterior' },
+                        ]
+                      }
+                    ]
+                  }}
+                />
+                <ServiceDetailPage
+                  price={servicePrices['residential-exterior']}
+                  title="Residential Exterior"
+                  serviceName="residential-exterior"
+                  {...getServiceContent('residential-exterior')}
+                />
+              </>
             } />
             <Route path="/residential-interior" element={
-              <ServiceDetailPage
-                price={servicePrices['residential-interior']}
-                title="Residential Interior"
-                serviceName="residential-interior"
-                {...getServiceContent('residential-interior')}
-              />
+              <>
+                <PageMeta
+                  title="Residential Interior Rendering | 48-Hour Turnaround | Render AI"
+                  description="High-fidelity residential interior 3D renderings with 48-hour turnaround. Perfect for interior designers, architects, and homeowners. Starting from $750."
+                  canonical="/residential-interior"
+                  jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@graph': [
+                      {
+                        '@type': 'Service',
+                        name: 'Residential Interior Rendering',
+                        provider: { '@type': 'LocalBusiness', name: 'Render AI', url: 'https://renderai.lol' },
+                        description: 'High-fidelity residential interior 3D renderings with 48-hour turnaround.',
+                        url: 'https://renderai.lol/residential-interior',
+                        offers: { '@type': 'Offer', price: String(servicePrices['residential-interior']), priceCurrency: 'USD' },
+                        areaServed: { '@type': 'Country', name: 'United States' },
+                      },
+                      {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://renderai.lol' },
+                          { '@type': 'ListItem', position: 2, name: 'Residential Interior Rendering', item: 'https://renderai.lol/residential-interior' },
+                        ]
+                      }
+                    ]
+                  }}
+                />
+                <ServiceDetailPage
+                  price={servicePrices['residential-interior']}
+                  title="Residential Interior"
+                  serviceName="residential-interior"
+                  {...getServiceContent('residential-interior')}
+                />
+              </>
             } />
             <Route path="/residential-aerial" element={
-              <ServiceDetailPage
-                price={servicePrices['residential-aerial']}
-                title="Residential Aerial"
-                serviceName="residential-aerial"
-                {...getServiceContent('residential-aerial')}
-              />
+              <>
+                <PageMeta
+                  title="Residential Aerial Rendering | Neighborhood Context Views | Render AI"
+                  description="Stunning residential aerial 3D renderings showing neighborhood context and site overview. 3-day turnaround for architects and developers. Starting from $850."
+                  canonical="/residential-aerial"
+                  jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@graph': [
+                      {
+                        '@type': 'Service',
+                        name: 'Residential Aerial Rendering',
+                        provider: { '@type': 'LocalBusiness', name: 'Render AI', url: 'https://renderai.lol' },
+                        description: 'Stunning residential aerial 3D renderings with neighborhood context.',
+                        url: 'https://renderai.lol/residential-aerial',
+                        offers: { '@type': 'Offer', price: String(servicePrices['residential-aerial']), priceCurrency: 'USD' },
+                        areaServed: { '@type': 'Country', name: 'United States' },
+                      },
+                      {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://renderai.lol' },
+                          { '@type': 'ListItem', position: 2, name: 'Residential Aerial Rendering', item: 'https://renderai.lol/residential-aerial' },
+                        ]
+                      }
+                    ]
+                  }}
+                />
+                <ServiceDetailPage
+                  price={servicePrices['residential-aerial']}
+                  title="Residential Aerial"
+                  serviceName="residential-aerial"
+                  {...getServiceContent('residential-aerial')}
+                />
+              </>
             } />
             <Route path="/commercial-exterior" element={
-              <ServiceDetailPage
-                price={servicePrices['commercial-exterior']}
-                title="Commercial Exterior"
-                serviceName="commercial-exterior"
-                {...getServiceContent('commercial-exterior')}
-              />
+              <>
+                <PageMeta
+                  title="Commercial Exterior Rendering | Office & Retail Visualization | Render AI"
+                  description="Photorealistic commercial exterior 3D renderings for offices, retail, and mixed-use developments. 3–4 day turnaround. Starting from $850."
+                  canonical="/commercial-exterior"
+                  jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@graph': [
+                      {
+                        '@type': 'Service',
+                        name: 'Commercial Exterior Rendering',
+                        provider: { '@type': 'LocalBusiness', name: 'Render AI', url: 'https://renderai.lol' },
+                        description: 'Photorealistic commercial exterior 3D renderings for office, retail and mixed-use projects.',
+                        url: 'https://renderai.lol/commercial-exterior',
+                        offers: { '@type': 'Offer', price: String(servicePrices['commercial-exterior']), priceCurrency: 'USD' },
+                        areaServed: { '@type': 'Country', name: 'United States' },
+                      },
+                      {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://renderai.lol' },
+                          { '@type': 'ListItem', position: 2, name: 'Commercial Exterior Rendering', item: 'https://renderai.lol/commercial-exterior' },
+                        ]
+                      }
+                    ]
+                  }}
+                />
+                <ServiceDetailPage
+                  price={servicePrices['commercial-exterior']}
+                  title="Commercial Exterior"
+                  serviceName="commercial-exterior"
+                  {...getServiceContent('commercial-exterior')}
+                />
+              </>
             } />
             <Route path="/commercial-interior" element={
-              <ServiceDetailPage
-                price={servicePrices['commercial-interior']}
-                title="Commercial Interior"
-                serviceName="commercial-interior"
-                {...getServiceContent('commercial-interior')}
-              />
+              <>
+                <PageMeta
+                  title="Commercial Interior Rendering | Office & Retail Spaces | Render AI"
+                  description="High-fidelity commercial interior 3D renderings for offices, retail, and hospitality spaces. 5-day turnaround. Starting from $950."
+                  canonical="/commercial-interior"
+                  jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@graph': [
+                      {
+                        '@type': 'Service',
+                        name: 'Commercial Interior Rendering',
+                        provider: { '@type': 'LocalBusiness', name: 'Render AI', url: 'https://renderai.lol' },
+                        description: 'High-fidelity commercial interior 3D renderings for offices, retail and hospitality.',
+                        url: 'https://renderai.lol/commercial-interior',
+                        offers: { '@type': 'Offer', price: String(servicePrices['commercial-interior']), priceCurrency: 'USD' },
+                        areaServed: { '@type': 'Country', name: 'United States' },
+                      },
+                      {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://renderai.lol' },
+                          { '@type': 'ListItem', position: 2, name: 'Commercial Interior Rendering', item: 'https://renderai.lol/commercial-interior' },
+                        ]
+                      }
+                    ]
+                  }}
+                />
+                <ServiceDetailPage
+                  price={servicePrices['commercial-interior']}
+                  title="Commercial Interior"
+                  serviceName="commercial-interior"
+                  {...getServiceContent('commercial-interior')}
+                />
+              </>
             } />
             <Route path="/commercial-aerial" element={
-              <ServiceDetailPage
-                price={servicePrices['commercial-aerial']}
-                title="Commercial Aerial"
-                serviceName="commercial-aerial"
-                {...getServiceContent('commercial-aerial')}
-              />
+              <>
+                <PageMeta
+                  title="Commercial Aerial Rendering | Campus & Site Views | Render AI"
+                  description="Striking commercial aerial 3D renderings showing full campus and site context. 5-day turnaround for developers and architects. Starting from $950."
+                  canonical="/commercial-aerial"
+                  jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@graph': [
+                      {
+                        '@type': 'Service',
+                        name: 'Commercial Aerial Rendering',
+                        provider: { '@type': 'LocalBusiness', name: 'Render AI', url: 'https://renderai.lol' },
+                        description: 'Commercial aerial 3D renderings showing campus views and site context.',
+                        url: 'https://renderai.lol/commercial-aerial',
+                        offers: { '@type': 'Offer', price: String(servicePrices['commercial-aerial']), priceCurrency: 'USD' },
+                        areaServed: { '@type': 'Country', name: 'United States' },
+                      },
+                      {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://renderai.lol' },
+                          { '@type': 'ListItem', position: 2, name: 'Commercial Aerial Rendering', item: 'https://renderai.lol/commercial-aerial' },
+                        ]
+                      }
+                    ]
+                  }}
+                />
+                <ServiceDetailPage
+                  price={servicePrices['commercial-aerial']}
+                  title="Commercial Aerial"
+                  serviceName="commercial-aerial"
+                  {...getServiceContent('commercial-aerial')}
+                />
+              </>
             } />
             <Route path="/3d-model" element={
-              <ServiceDetailPage
-                price={servicePrices['3d-model']}
-                title="3D Model"
-                serviceName="3d-model"
-                {...getServiceContent('3d-model')}
-              />
+              <>
+                <PageMeta
+                  title="3D Modeling Services | SKP, DWG & 3DS Formats | Render AI"
+                  description="Professional 3D modeling supporting SKP, DWG, and 3DS formats. 5-day turnaround for architects, designers, and developers. Starting from $1,200."
+                  canonical="/3d-model"
+                  jsonLd={{
+                    '@context': 'https://schema.org',
+                    '@graph': [
+                      {
+                        '@type': 'Service',
+                        name: '3D Modeling',
+                        provider: { '@type': 'LocalBusiness', name: 'Render AI', url: 'https://renderai.lol' },
+                        description: 'Professional 3D modeling services supporting SKP, DWG, and 3DS formats.',
+                        url: 'https://renderai.lol/3d-model',
+                        offers: { '@type': 'Offer', price: String(servicePrices['3d-model']), priceCurrency: 'USD' },
+                        areaServed: { '@type': 'Country', name: 'United States' },
+                      },
+                      {
+                        '@type': 'BreadcrumbList',
+                        itemListElement: [
+                          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://renderai.lol' },
+                          { '@type': 'ListItem', position: 2, name: '3D Modeling', item: 'https://renderai.lol/3d-model' },
+                        ]
+                      }
+                    ]
+                  }}
+                />
+                <ServiceDetailPage
+                  price={servicePrices['3d-model']}
+                  title="3D Model"
+                  serviceName="3d-model"
+                  {...getServiceContent('3d-model')}
+                />
+              </>
             } />
-            <Route path="/custom" element={<CustomProjectPage servicePrices={servicePrices} />} />
+            <Route path="/custom" element={
+              <>
+                <PageMeta
+                  title="Custom Architectural Rendering Packages | Mix & Match | Render AI"
+                  description="Build a custom architectural visualization package by combining multiple rendering services. Mix and match to match your project scope and budget."
+                  canonical="/custom"
+                />
+                <CustomProjectPage servicePrices={servicePrices} />
+              </>
+            } />
             <Route path="/confirmation" element={<ConfirmationPage />} />
             <Route path="/inquiry-confirmation" element={<InquiryConfirmationPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          </React.Suspense>
         </AppErrorBoundary>
         
         <Footer />
@@ -2038,22 +697,6 @@ const App = () => {
   const [servicePrices, setServicePrices] = useState(PRICE_DEFAULTS);
 
   useEffect(() => {
-    const linkElement = document.createElement('link');
-    linkElement.rel = 'preconnect';
-    linkElement.href = 'https://fonts.googleapis.com';
-    document.head.appendChild(linkElement);
-
-    const linkElement2 = document.createElement('link');
-    linkElement2.rel = 'preconnect';
-    linkElement2.href = 'https://fonts.gstatic.com';
-    linkElement2.crossOrigin = 'anonymous';
-    document.head.appendChild(linkElement2);
-
-    const linkElement3 = document.createElement('link');
-    linkElement3.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800&display=swap';
-    linkElement3.rel = 'stylesheet';
-    document.head.appendChild(linkElement3);
-
     const style = document.createElement('style');
     style.textContent = `
       * {
@@ -2227,9 +870,6 @@ const App = () => {
     document.head.appendChild(style);
 
     return () => {
-      document.head.removeChild(linkElement);
-      document.head.removeChild(linkElement2);
-      document.head.removeChild(linkElement3);
       document.head.removeChild(style);
     };
   }, []);

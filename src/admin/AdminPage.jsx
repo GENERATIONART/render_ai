@@ -986,13 +986,140 @@ const ContactEditor = () => {
   );
 };
 
+const SERVICE_PAGE_OPTIONS = [
+  { key: 'residential-exterior', label: 'Residential Exterior' },
+  { key: 'residential-interior', label: 'Residential Interior' },
+  { key: 'residential-aerial', label: 'Residential Aerial' },
+  { key: 'commercial-exterior', label: 'Commercial Exterior' },
+  { key: 'commercial-interior', label: 'Commercial Interior' },
+  { key: 'commercial-aerial', label: 'Commercial Aerial' },
+  { key: '3d-model', label: '3D Model' }
+];
+
+const ServicePagesEditor = () => {
+  const [selectedKey, setSelectedKey] = useState('residential-exterior');
+  const [subtitle, setSubtitle] = useState('');
+  const [includes, setIncludes] = useState('');
+  const [process, setProcess] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const load = async (key) => {
+    setError('');
+    setSaved(false);
+    try {
+      const res = await fetch(`/api/admin/site-copy?keys=service.${key}.subtitle,service.${key}.includes,service.${key}.process`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `Failed to load (${res.status})`);
+      const map = new Map((data.rows || []).map((row) => [row.key, row.value]));
+      setSubtitle(map.get(`service.${key}.subtitle`) || '');
+      setIncludes(map.get(`service.${key}.includes`) || '');
+      setProcess(map.get(`service.${key}.process`) || '');
+    } catch (e) {
+      setError(e?.message || 'Failed to load');
+    }
+  };
+
+  useEffect(() => { load(selectedKey); }, [selectedKey]);
+
+  const save = async () => {
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    const rows = [
+      { key: `service.${selectedKey}.subtitle`, value: subtitle || '' },
+      { key: `service.${selectedKey}.includes`, value: includes || '' },
+      { key: `service.${selectedKey}.process`, value: process || '' }
+    ];
+    try {
+      const res = await fetch('/api/admin/site-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || `Save failed (${res.status})`);
+    } catch (e) {
+      setError(e?.message || 'Save failed');
+      setSaving(false);
+      return;
+    }
+    setSaved(true);
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 900 }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+        {SERVICE_PAGE_OPTIONS.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => setSelectedKey(s.key)}
+            style={{
+              ...secondaryButtonStyle,
+              background: selectedKey === s.key ? '#000000' : 'transparent',
+              color: selectedKey === s.key ? '#F4F4F4' : '#000000',
+              fontSize: '12px',
+              padding: '8px 12px'
+            }}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+      {!!error && <p style={{ color: '#FF4500', marginBottom: 16 }}>{error}</p>}
+      <div style={{ marginTop: 6 }}>
+        <div style={labelStyle}>Subtitle (shown under the title)</div>
+        <textarea
+          value={subtitle}
+          onChange={(e) => setSubtitle(e.target.value)}
+          rows={3}
+          placeholder="A short description of this service…"
+          style={{ width: '100%', border: '2px solid #000000', padding: 12, fontSize: 16, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", background: 'transparent', outline: 'none', resize: 'vertical' }}
+        />
+      </div>
+      <div style={{ marginTop: 16 }}>
+        <div style={labelStyle}>What's Included (one item per line)</div>
+        <textarea
+          value={includes}
+          onChange={(e) => setIncludes(e.target.value)}
+          rows={7}
+          placeholder={'1 High-Res Rendering (4k)\nEnvironment Integration\n2 Rounds of Revisions\n24-Hour Turnaround'}
+          style={{ width: '100%', border: '2px solid #000000', padding: 12, fontSize: 14, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", background: 'transparent', outline: 'none', resize: 'vertical' }}
+        />
+        <div style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>One bullet point per line.</div>
+      </div>
+      <div style={{ marginTop: 16 }}>
+        <div style={labelStyle}>The Process (one step per line, format: title | description)</div>
+        <textarea
+          value={process}
+          onChange={(e) => setProcess(e.target.value)}
+          rows={5}
+          placeholder={'Upload Assets | Submit CAD plans, references, and inspiration.\nDraft Review | Review the lighting and material pass.\nFinal Delivery | Receive the high-fidelity output.'}
+          style={{ width: '100%', border: '2px solid #000000', padding: 12, fontSize: 14, fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", background: 'transparent', outline: 'none', resize: 'vertical' }}
+        />
+        <div style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>Format: <code>Step Title | Step description</code> (one per line).</div>
+      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 18 }}>
+        <button type="button" style={buttonStyle} onClick={save} disabled={saving}>
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        {saved ? <span style={{ fontSize: 14, opacity: 0.7 }}>Saved.</span> : null}
+      </div>
+    </div>
+  );
+};
+
 const SERVICES = [
   { key: 'residential-exterior', label: 'Residential Exterior', defaultPrice: 500 },
   { key: 'residential-interior', label: 'Residential Interior', defaultPrice: 750 },
   { key: 'residential-aerial', label: 'Residential Aerial', defaultPrice: 850 },
   { key: 'commercial-exterior', label: 'Commercial Exterior', defaultPrice: 850 },
   { key: 'commercial-interior', label: 'Commercial Interior', defaultPrice: 950 },
-  { key: 'commercial-aerial', label: 'Commercial Aerial', defaultPrice: 950 }
+  { key: 'commercial-aerial', label: 'Commercial Aerial', defaultPrice: 950 },
+  { key: '3d-model', label: '3D Model', defaultPrice: 1200 }
 ];
 
 const PricingEditor = () => {
@@ -1237,6 +1364,17 @@ export const AdminPage = () => {
           >
             Pricing
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('services')}
+            style={{
+              ...secondaryButtonStyle,
+              background: tab === 'services' ? '#000000' : 'transparent',
+              color: tab === 'services' ? '#F4F4F4' : '#000000'
+            }}
+          >
+            Services
+          </button>
         </div>
       </Section>
 
@@ -1267,6 +1405,12 @@ export const AdminPage = () => {
       {tab === 'pricing' ? (
         <Section title="Pricing" subtitle="Update service prices. Changes apply immediately to the site and Stripe checkout.">
           <PricingEditor />
+        </Section>
+      ) : null}
+
+      {tab === 'services' ? (
+        <Section title="Service Pages" subtitle="Edit the subtitle, what's included, and process steps for each service page.">
+          <ServicePagesEditor />
         </Section>
       ) : null}
     </>

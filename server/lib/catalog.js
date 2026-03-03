@@ -4,6 +4,7 @@ export const SERVICE_CATALOG = {
   'residential-aerial': { title: 'Residential Aerial', amountUsd: 850 },
   'commercial-exterior': { title: 'Commercial Exterior', amountUsd: 850 },
   'commercial-interior': { title: 'Commercial Interior', amountUsd: 950 },
-  'commercial-aerial': { title: 'Commercial Aerial', amountUsd: 950 }
+  'commercial-aerial': { title: 'Commercial Aerial', amountUsd: 950 },
+  '3d-model': { title: '3D Model', amountUsd: 1200 }
 };
 

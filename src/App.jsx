@@ -371,6 +371,7 @@ const HomePage = ({ servicePrices, heroHeadline, heroSubheadline, contactHeadlin
         <ServiceRow price={servicePrices['commercial-exterior']} title="Commercial Exterior" tag="Office/Retail" onClick={() => navigate('/commercial-exterior')} />
         <ServiceRow price={servicePrices['commercial-interior']} title="Commercial Interior" tag="Office/Retail" onClick={() => navigate('/commercial-interior')} />
         <ServiceRow price={servicePrices['commercial-aerial']} title="Commercial Aerial" tag="Campus View" onClick={() => navigate('/commercial-aerial')} />
+        <ServiceRow price={servicePrices['3d-model']} title="3D Model" tag="SKP / DWG / 3DS" onClick={() => navigate('/3d-model')} />
         <ServiceRow priceDisplay="Custom" title="Build Your Own" tag="Mix & Match Services" onClick={() => navigate('/custom')} />
       </section>
 
@@ -945,11 +946,12 @@ const ServiceDetailPage = ({ price, title, subtitle, includes, process, serviceN
 	          <div style={{ position: 'relative' }}>
 	            <input 
 	              type="text" 
-	              placeholder={serviceName === 'residential-exterior' ? 'Project Link / DropBox (Optional)' : 
+	              placeholder={serviceName === 'residential-exterior' ? 'Project Link / DropBox (Optional)' :
 	                           serviceName === 'residential-interior' ? 'Style Preference (e.g. Minimalist)' :
 	                           serviceName === 'residential-aerial' ? 'Site Location / Address' :
 	                           serviceName === 'commercial-exterior' ? 'Development Name / Brand' :
 	                           serviceName === 'commercial-interior' ? 'Square Footage' :
+	                           serviceName === '3d-model' ? 'Preferred Output Format (SKP, DWG, or 3DS)' :
 	                           'Campus / Site Address'}
                 value={projectInfo}
                 onChange={(e) => setProjectInfo(e.target.value)}
@@ -1039,7 +1041,8 @@ const CUSTOM_SERVICES = [
   { key: 'residential-aerial', title: 'Residential Aerial', tag: 'Neighborhood View' },
   { key: 'commercial-exterior', title: 'Commercial Exterior', tag: 'Office/Retail' },
   { key: 'commercial-interior', title: 'Commercial Interior', tag: 'Office/Retail' },
-  { key: 'commercial-aerial', title: 'Commercial Aerial', tag: 'Campus View' }
+  { key: 'commercial-aerial', title: 'Commercial Aerial', tag: 'Campus View' },
+  { key: '3d-model', title: '3D Model', tag: 'SKP / DWG / 3DS' }
 ];
 
 const CustomProjectPage = ({ servicePrices }) => {
@@ -1810,6 +1813,94 @@ const ScrollToTop = () => {
   return null;
 };
 
+const SERVICE_COPY_DEFAULTS = {
+  'residential-exterior': {
+    subtitle: 'Photorealistic visualization for single-family homes to showcase architectural intent and curb appeal.',
+    includes: ['1 High-Res Rendering (4k)', 'Environment Integration (Day/Dusk)', 'Landscape & Vegetation', 'Standard Material Library', '2 Rounds of Revisions', '24-Hour Turnaround'],
+    process: [
+      { title: 'Upload Assets', description: 'Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations.' },
+      { title: 'Material Setup', description: 'We apply textures based on your moodboard or specs.' },
+      { title: 'Lighting Draft', description: 'Review low-res lighting pass for approval.' },
+      { title: 'Final Delivery', description: 'Receive high-fidelity output ready for print or web.' }
+    ]
+  },
+  'residential-interior': {
+    subtitle: 'Detailed interior staging focused on living spaces, furniture curation, and atmospheric lighting.',
+    includes: ['1 High-Res Rendering (4k)', 'Custom Furniture Selection', 'Complex Lighting Setup', 'Soft Goods & Decor Details', '3 Rounds of Revisions', '48-Hour Turnaround'],
+    process: [
+      { title: 'Upload Assets', description: 'Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations.' },
+      { title: 'Furniture Selection', description: 'Upload your furniture and finishes selection.' },
+      { title: 'Draft Review', description: 'Check angles, textures, and lighting balance.' },
+      { title: 'Final Delivery', description: 'Receive high-fidelity output ready for print or web.' }
+    ]
+  },
+  'residential-aerial': {
+    subtitle: "Dramatic bird's eye perspective showcasing your home within its neighborhood context.",
+    includes: ['1 Wide-Angle Aerial View', 'Full Site Modeling', 'Surrounding Context (Ghosted or Detailed)', 'Vegetation & Topography', '3 Rounds of Revisions', '3-Day Turnaround'],
+    process: [
+      { title: 'Upload Assets', description: 'Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos.' },
+      { title: 'Massing', description: 'We establish the scale of the building vs the environment.' },
+      { title: 'Environment', description: 'Adding trees, roads, cars, and neighboring structures.' },
+      { title: 'Final Delivery', description: 'Receive high-fidelity output ready for print or web.' }
+    ]
+  },
+  'commercial-exterior': {
+    subtitle: 'Striking visuals for retail, office, and mixed-use developments focused on scale and branding.',
+    includes: ['1 Hero Shot (Street Level)', 'Commercial Entourage (People/Cars)', 'Signage & Branding Integration', 'Glass & Facade Detailing', '3 Rounds of Revisions', '3-4 Day Turnaround'],
+    process: [
+      { title: 'Upload Assets', description: 'Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations.' },
+      { title: 'Brand Integration', description: 'Placement of logos, signage, and brand colors.' },
+      { title: 'Life & Activity', description: 'Populating the scene with shoppers, workers, and activity.' }
+    ]
+  },
+  'commercial-interior': {
+    subtitle: 'Office, retail, and hospitality interiors that communicate flow, capacity, and atmosphere.',
+    includes: ['1 Perspective View', 'Office/Retail Furniture Systems', 'Advanced Lighting (Artificial)', 'Entourage (People working/shopping)', '4 Rounds of Revisions', '5 Day Turnaround'],
+    process: [
+      { title: 'Upload Assets', description: 'Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations.' },
+      { title: 'Furniture Selection', description: 'Upload your furniture and finishes selection.' },
+      { title: 'Lighting Design', description: 'IES profiles for accurate artificial lighting simulation.' },
+      { title: 'Final Delivery', description: 'Receive high-fidelity output ready for print or web.' }
+    ]
+  },
+  'commercial-aerial': {
+    subtitle: "Bird's eye perspective for office parks, retail centers, and mixed-use developments showcasing site planning and scale.",
+    includes: ['1 Wide-Angle Campus View', 'Multi-Building Site Modeling', 'Parking & Infrastructure', 'Signage & Branding', '4 Rounds of Revisions', '5-Day Turnaround'],
+    process: [
+      { title: 'Upload Assets', description: 'Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos.' },
+      { title: 'Site Layout', description: 'We model the campus, parking lots, and access roads.' },
+      { title: 'Context Building', description: 'Adding surrounding buildings, vehicles, and landscaping.' },
+      { title: 'Final Delivery', description: 'Receive high-fidelity output ready for print or web.' }
+    ]
+  },
+  '3d-model': {
+    subtitle: 'Production-ready 3D models delivered in your preferred format — SKP, DWG, or 3DS — ready for any 3D software or workflow.',
+    includes: ['1 Production-Ready 3D Model', 'Choice of Format: SKP, DWG, or 3DS', 'Clean Geometry & Layering', 'Material & Texture Mapping', '3 Rounds of Revisions', '5-Day Turnaround'],
+    process: [
+      { title: 'Upload Assets', description: 'Submit floor plans, sketches, reference images, CAD files, or any existing 3D files.' },
+      { title: 'Geometry Build', description: 'We construct accurate 3D geometry based on your drawings and references.' },
+      { title: 'Materials & Layers', description: 'Textures, materials, and layers are applied and organized for easy editing.' },
+      { title: 'Format Export', description: 'Final model is exported in your chosen format (SKP, DWG, or 3DS) and delivered.' }
+    ]
+  }
+};
+
+const parseServiceList = (raw) => {
+  if (!raw || !raw.trim()) return null;
+  const lines = raw.split('\n').map(s => s.trim()).filter(Boolean);
+  return lines.length > 0 ? lines : null;
+};
+
+const parseServiceSteps = (raw) => {
+  if (!raw || !raw.trim()) return null;
+  const steps = raw.split('\n').map(line => {
+    const idx = line.indexOf('|');
+    if (idx === -1) return { title: line.trim(), description: '' };
+    return { title: line.slice(0, idx).trim(), description: line.slice(idx + 1).trim() };
+  }).filter(s => s.title);
+  return steps.length > 0 ? steps : null;
+};
+
 const AppFrame = ({ portfolioItems, siteCopy, servicePrices }) => {
   const { pathname } = useLocation();
   const isInquiry = pathname === '/inquiry-confirmation';
@@ -1818,6 +1909,15 @@ const AppFrame = ({ portfolioItems, siteCopy, servicePrices }) => {
     padding: isInquiry
       ? '20px clamp(16px, 4vw, 60px) 120px clamp(16px, 4vw, 60px)'
       : customStyles.container.padding
+  };
+
+  const getServiceContent = (key) => {
+    const def = SERVICE_COPY_DEFAULTS[key] || {};
+    return {
+      subtitle: siteCopy[`service.${key}.subtitle`] || def.subtitle || '',
+      includes: parseServiceList(siteCopy[`service.${key}.includes`]) || def.includes || [],
+      process: parseServiceSteps(siteCopy[`service.${key}.process`]) || def.process || []
+    };
   };
 
   return (
@@ -1858,131 +1958,56 @@ const AppFrame = ({ portfolioItems, siteCopy, servicePrices }) => {
               <ServiceDetailPage
                 price={servicePrices['residential-exterior']}
                 title="Residential Exterior"
-                subtitle="Photorealistic visualization for single-family homes to showcase architectural intent and curb appeal."
                 serviceName="residential-exterior"
-                includes={[
-                  "1 High-Res Rendering (4k)",
-                  "Environment Integration (Day/Dusk)",
-                  "Landscape & Vegetation",
-                  "Standard Material Library",
-                  "2 Rounds of Revisions",
-                  "24-Hour Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                  { title: "Material Setup", description: "We apply textures based on your moodboard or specs." },
-                  { title: "Lighting Draft", description: "Review low-res lighting pass for approval." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
+                {...getServiceContent('residential-exterior')}
               />
             } />
             <Route path="/residential-interior" element={
               <ServiceDetailPage
                 price={servicePrices['residential-interior']}
                 title="Residential Interior"
-                subtitle="Detailed interior staging focused on living spaces, furniture curation, and atmospheric lighting."
                 serviceName="residential-interior"
-                includes={[
-                  "1 High-Res Rendering (4k)",
-                  "Custom Furniture Selection",
-                  "Complex Lighting Setup",
-                  "Soft Goods & Decor Details",
-                  "3 Rounds of Revisions",
-                  "48-Hour Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                  { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
-                  { title: "Draft Review", description: "Check angles, textures, and lighting balance." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
+                {...getServiceContent('residential-interior')}
               />
             } />
             <Route path="/residential-aerial" element={
               <ServiceDetailPage
                 price={servicePrices['residential-aerial']}
                 title="Residential Aerial"
-                subtitle="Drone-view perspective to establish neighborhood context, landscaping, and property boundaries."
                 serviceName="residential-aerial"
-                includes={[
-                  "1 Wide-Angle Aerial View",
-                  "Full Site Modeling",
-                  "Surrounding Context (Ghosted or Detailed)",
-                  "Vegetation & Topography",
-                  "3 Rounds of Revisions",
-                  "3-Day Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
-                  { title: "Massing", description: "We establish the scale of the building vs the environment." },
-                  { title: "Environment", description: "Adding trees, roads, cars, and neighboring structures." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
+                {...getServiceContent('residential-aerial')}
               />
             } />
             <Route path="/commercial-exterior" element={
               <ServiceDetailPage
                 price={servicePrices['commercial-exterior']}
                 title="Commercial Exterior"
-                subtitle="Striking visuals for retail, office, and mixed-use developments focused on scale and branding."
                 serviceName="commercial-exterior"
-                includes={[
-                  "1 Hero Shot (Street Level)",
-                  "Commercial Entourage (People/Cars)",
-                  "Signage & Branding Integration",
-                  "Glass & Facade Detailing",
-                  "3 Rounds of Revisions",
-                  "3-4 Day Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                  { title: "Brand Integration", description: "Placement of logos, signage, and brand colors." },
-                  { title: "Life & Activity", description: "Populating the scene with shoppers, workers, and activity." }
-                ]}
+                {...getServiceContent('commercial-exterior')}
               />
             } />
             <Route path="/commercial-interior" element={
               <ServiceDetailPage
                 price={servicePrices['commercial-interior']}
                 title="Commercial Interior"
-                subtitle="Office, retail, and hospitality interiors that communicate flow, capacity, and atmosphere."
                 serviceName="commercial-interior"
-                includes={[
-                  "1 Perspective View",
-                  "Office/Retail Furniture Systems",
-                  "Advanced Lighting (Artificial)",
-                  "Entourage (People working/shopping)",
-                  "4 Rounds of Revisions",
-                  "5 Day Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, photo references, sketches, images, and design inspirations." },
-                  { title: "Furniture Selection", description: "Upload your furniture and finishes selection." },
-                  { title: "Lighting Design", description: "IES profiles for accurate artificial lighting simulation." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
+                {...getServiceContent('commercial-interior')}
               />
             } />
             <Route path="/commercial-aerial" element={
               <ServiceDetailPage
                 price={servicePrices['commercial-aerial']}
                 title="Commercial Aerial"
-                subtitle="Bird's eye perspective for office parks, retail centers, and mixed-use developments showcasing site planning and scale."
                 serviceName="commercial-aerial"
-                includes={[
-                  "1 Wide-Angle Campus View",
-                  "Multi-Building Site Modeling",
-                  "Parking & Infrastructure",
-                  "Signage & Branding",
-                  "4 Rounds of Revisions",
-                  "5-Day Turnaround"
-                ]}
-                process={[
-                  { title: "Upload Assets", description: "Submit CAD plans, 3D models, site plans, photo references, sketches, images, and aerial photos." },
-                  { title: "Site Layout", description: "We model the campus, parking lots, and access roads." },
-                  { title: "Context Building", description: "Adding surrounding buildings, vehicles, and landscaping." },
-                  { title: "Final Delivery", description: "Receive high-fidelity output ready for print or web." }
-                ]}
+                {...getServiceContent('commercial-aerial')}
+              />
+            } />
+            <Route path="/3d-model" element={
+              <ServiceDetailPage
+                price={servicePrices['3d-model']}
+                title="3D Model"
+                serviceName="3d-model"
+                {...getServiceContent('3d-model')}
               />
             } />
             <Route path="/custom" element={<CustomProjectPage servicePrices={servicePrices} />} />
@@ -2003,7 +2028,8 @@ const PRICE_DEFAULTS = {
   'residential-aerial': 850,
   'commercial-exterior': 850,
   'commercial-interior': 950,
-  'commercial-aerial': 950
+  'commercial-aerial': 950,
+  '3d-model': 1200
 };
 
 const App = () => {
@@ -2287,7 +2313,29 @@ const App = () => {
             'service.price.residential-aerial',
             'service.price.commercial-exterior',
             'service.price.commercial-interior',
-            'service.price.commercial-aerial'
+            'service.price.commercial-aerial',
+            'service.price.3d-model',
+            'service.residential-exterior.subtitle',
+            'service.residential-exterior.includes',
+            'service.residential-exterior.process',
+            'service.residential-interior.subtitle',
+            'service.residential-interior.includes',
+            'service.residential-interior.process',
+            'service.residential-aerial.subtitle',
+            'service.residential-aerial.includes',
+            'service.residential-aerial.process',
+            'service.commercial-exterior.subtitle',
+            'service.commercial-exterior.includes',
+            'service.commercial-exterior.process',
+            'service.commercial-interior.subtitle',
+            'service.commercial-interior.includes',
+            'service.commercial-interior.process',
+            'service.commercial-aerial.subtitle',
+            'service.commercial-aerial.includes',
+            'service.commercial-aerial.process',
+            'service.3d-model.subtitle',
+            'service.3d-model.includes',
+            'service.3d-model.process'
           ]);
         if (error) {
           return;

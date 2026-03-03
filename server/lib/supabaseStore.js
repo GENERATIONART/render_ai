@@ -4,10 +4,12 @@ import { getSupabaseAdmin } from './supabaseAdmin.js';
 
 export const getStorageBucket = () => process.env.SUPABASE_STORAGE_BUCKET || 'project-files';
 
-export const createProject = async ({ email, fullName, businessName, serviceName, projectInfo }) => {
+export const createProject = async ({ email, fullName, businessName, serviceName, projectInfo, amountCents: amountCentsOverride }) => {
   const supabase = getSupabaseAdmin();
   const catalogItem = SERVICE_CATALOG[serviceName];
-  const amountCents = catalogItem ? Math.round(catalogItem.amountUsd * 100) : null;
+  const amountCents = amountCentsOverride != null
+    ? amountCentsOverride
+    : catalogItem ? Math.round(catalogItem.amountUsd * 100) : null;
 
   const now = new Date().toISOString();
   const { data, error } = await supabase

@@ -1209,6 +1209,183 @@ const PricingEditor = () => {
   );
 };
 
+const slugify = (str) =>
+  str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+const BLANK_POST = { title: '', slug: '', excerpt: '', content: '', cover_image: '', published: false };
+
+const BlogEditor = () => {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null); // null = list view, {} = form
+  const [form, setForm] = useState(BLANK_POST);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const load = () => {
+    setLoading(true);
+    fetch('/api/admin/blog', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => { setPosts(d.posts || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const openNew = () => {
+    setForm(BLANK_POST);
+    setEditing('new');
+    setError('');
+    setSuccess('');
+  };
+
+  const openEdit = (post) => {
+    setForm({
+      title: post.title || '',
+      slug: post.slug || '',
+      excerpt: post.excerpt || '',
+      content: post.content || '',
+      cover_image: post.cover_image || '',
+      published: !!post.published
+    });
+    setEditing(post.id);
+    setError('');
+    setSuccess('');
+  };
+
+  const handleTitleChange = (val) => {
+    setForm((f) => ({ ...f, title: val, slug: editing === 'new' ? slugify(val) : f.slug }));
+  };
+
+  const handleSave = async () => {
+    if (!form.title.trim()) return setError('Title is required.');
+    if (!form.slug.trim()) return setError('Slug is required.');
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      const isNew = editing === 'new';
+      const url = isNew ? '/api/admin/blog' : `/api/admin/blog/${editing}`;
+      const method = isNew ? 'POST' : 'PUT';
+      const res = await fetch(url, {
+        method,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Save failed.'); setSaving(false); return; }
+      setSuccess('Saved.');
+      setSaving(false);
+      load();
+      setEditing(null);
+    } catch {
+      setError('Save failed.');
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this post? This cannot be undone.')) return;
+    await fetch(`/api/admin/blog/${id}`, { method: 'DELETE', credentials: 'include' });
+    load();
+  };
+
+  const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+
+  const textareaStyle = {
+    width: '100%', border: '2px solid #000000', padding: 12, fontSize: 15,
+    fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+    background: 'transparent', outline: 'none', resize: 'vertical', lineHeight: 1.6
+  };
+
+  if (editing !== null) {
+    return (
+      <div>
+        <button type="button" style={{ ...secondaryButtonStyle, marginBottom: 28 }} onClick={() => setEditing(null)}>
+          ← Back to Posts
+        </button>
+        <div style={{ display: 'grid', gap: 20 }}>
+          <div>
+            <div style={labelStyle}>Title</div>
+            <input style={inputStyle} value={form.title} onChange={(e) => handleTitleChange(e.target.value)} placeholder="My First Post" />
+          </div>
+          <div>
+            <div style={labelStyle}>Slug (URL)</div>
+            <input style={inputStyle} value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: slugify(e.target.value) }))} placeholder="my-first-post" />
+            <div style={{ fontSize: 12, opacity: 0.55, marginTop: 6 }}>renderai.lol/blog/{form.slug || 'slug'}</div>
+          </div>
+          <div>
+            <div style={labelStyle}>Cover Image URL (optional)</div>
+            <input style={inputStyle} value={form.cover_image} onChange={(e) => setForm((f) => ({ ...f, cover_image: e.target.value }))} placeholder="https://..." />
+          </div>
+          <div>
+            <div style={labelStyle}>Excerpt (shown on blog listing)</div>
+            <textarea style={textareaStyle} rows={3} value={form.excerpt} onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))} placeholder="A short summary of the post..." />
+          </div>
+          <div>
+            <div style={labelStyle}>Content</div>
+            <div style={{ fontSize: 12, opacity: 0.55, marginBottom: 8 }}>Separate paragraphs with a blank line.</div>
+            <textarea style={textareaStyle} rows={20} value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="Write your post here...&#10;&#10;Each blank line starts a new paragraph." />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <input
+              id="blog-published"
+              type="checkbox"
+              checked={form.published}
+              onChange={(e) => setForm((f) => ({ ...f, published: e.target.checked }))}
+              style={{ width: 18, height: 18, cursor: 'pointer' }}
+            />
+            <label htmlFor="blog-published" style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>
+              Published (visible on site)
+            </label>
+          </div>
+          {error && <p style={{ color: '#FF4500', fontSize: 14 }}>{error}</p>}
+          {success && <p style={{ color: '#000', fontSize: 14, opacity: 0.6 }}>{success}</p>}
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button type="button" style={buttonStyle} onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving…' : 'Save Post'}
+            </button>
+            <button type="button" style={secondaryButtonStyle} onClick={() => setEditing(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: 28 }}>
+        <button type="button" style={buttonStyle} onClick={openNew}>+ New Post</button>
+      </div>
+      {loading && <p style={{ fontSize: 14, opacity: 0.5 }}>Loading…</p>}
+      {!loading && posts.length === 0 && (
+        <p style={{ fontSize: 16, opacity: 0.6 }}>No posts yet. Hit <strong>+ New Post</strong> to write your first one.</p>
+      )}
+      {!loading && posts.map((post) => (
+        <div key={post.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '16px 0', borderBottom: '1px solid rgba(0,0,0,0.12)', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>{post.title}</div>
+            <div style={{ fontSize: 13, opacity: 0.55 }}>
+              /blog/{post.slug} &nbsp;·&nbsp; {formatDate(post.published_at || post.created_at)} &nbsp;·&nbsp;
+              <span style={{ fontWeight: 700, color: post.published ? '#000' : '#FF4500' }}>
+                {post.published ? 'Published' : 'Draft'}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="button" style={secondaryButtonStyle} onClick={() => openEdit(post)}>Edit</button>
+            <button type="button" style={{ ...secondaryButtonStyle, borderColor: '#FF4500', color: '#FF4500' }} onClick={() => handleDelete(post.id)}>Delete</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const AdminPage = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [sessionEmail, setSessionEmail] = useState('');
@@ -1375,6 +1552,17 @@ export const AdminPage = () => {
           >
             Services
           </button>
+          <button
+            type="button"
+            onClick={() => setTab('blog')}
+            style={{
+              ...secondaryButtonStyle,
+              background: tab === 'blog' ? '#000000' : 'transparent',
+              color: tab === 'blog' ? '#F4F4F4' : '#000000'
+            }}
+          >
+            Blog
+          </button>
         </div>
       </Section>
 
@@ -1411,6 +1599,12 @@ export const AdminPage = () => {
       {tab === 'services' ? (
         <Section title="Service Pages" subtitle="Edit the subtitle, what's included, and process steps for each service page.">
           <ServicePagesEditor />
+        </Section>
+      ) : null}
+
+      {tab === 'blog' ? (
+        <Section title="Blog" subtitle="Write and publish blog posts. Separate paragraphs with a blank line.">
+          <BlogEditor />
         </Section>
       ) : null}
     </>

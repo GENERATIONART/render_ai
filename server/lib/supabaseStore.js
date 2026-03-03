@@ -169,3 +169,85 @@ export const markStripeEventProcessed = async (eventId) => {
     throw new Error(error.message);
   }
 };
+
+// ── Blog ──────────────────────────────────────────────────────────────────────
+
+export const listBlogPosts = async ({ includeDrafts = false } = {}) => {
+  const supabase = getSupabaseAdmin();
+  let query = supabase
+    .from('blog_posts')
+    .select('id, title, slug, excerpt, cover_image, published, published_at, created_at, updated_at')
+    .order('published_at', { ascending: false, nullsFirst: false });
+  if (!includeDrafts) query = query.eq('published', true);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data || [];
+};
+
+export const getBlogPostBySlug = async (slug, { includeDrafts = false } = {}) => {
+  const supabase = getSupabaseAdmin();
+  let query = supabase.from('blog_posts').select('*').eq('slug', slug).maybeSingle();
+  if (!includeDrafts) query = supabase.from('blog_posts').select('*').eq('slug', slug).eq('published', true).maybeSingle();
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data || null;
+};
+
+export const getBlogPostById = async (id) => {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from('blog_posts').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data || null;
+};
+
+export const createBlogPost = async ({ title, slug, excerpt, content, cover_image, published }) => {
+  const supabase = getSupabaseAdmin();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .insert({
+      title,
+      slug,
+      excerpt: excerpt || null,
+      content: content || null,
+      cover_image: cover_image || null,
+      published: !!published,
+      published_at: published ? now : null,
+      created_at: now,
+      updated_at: now
+    })
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export const updateBlogPost = async (id, { title, slug, excerpt, content, cover_image, published }) => {
+  const supabase = getSupabaseAdmin();
+  const now = new Date().toISOString();
+  const existing = await getBlogPostById(id);
+  const wasUnpublished = existing && !existing.published;
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .update({
+      title,
+      slug,
+      excerpt: excerpt || null,
+      content: content || null,
+      cover_image: cover_image || null,
+      published: !!published,
+      published_at: published && wasUnpublished ? now : (existing?.published_at || null),
+      updated_at: now
+    })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export const deleteBlogPost = async (id) => {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from('blog_posts').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+};

@@ -10,7 +10,12 @@ import {
   markPaid,
   markStripeEventProcessed,
   recordProjectFiles,
-  setStripeSession
+  setStripeSession,
+  listBlogPosts,
+  getBlogPostBySlug,
+  createBlogPost,
+  updateBlogPost,
+  deleteBlogPost
 } from './lib/supabaseStore.js';
 import { getSupabaseAdmin } from './lib/supabaseAdmin.js';
 import { renderOwnerEmailHtml, renderOwnerEmailText, sendOwnerEmail, sendEmail, renderBookingConfirmationHtml, renderBookingConfirmationText, renderInquiryConfirmationHtml, renderInquiryConfirmationText } from './lib/email.js';
@@ -650,6 +655,83 @@ export default async function handler(req, res) {
       return json(res, 200, { received: true });
     } catch (e) {
       return json(res, 500, { error: e?.message || 'Failed to process webhook' });
+    }
+  }
+
+  // ── Blog (public) ───────────────────────────────────────────────────────────
+
+  if (pathname === '/api/blog' && req.method === 'GET') {
+    try {
+      const posts = await listBlogPosts({ includeDrafts: false });
+      return json(res, 200, { posts });
+    } catch (e) {
+      return json(res, 500, { error: e?.message || 'Failed to load blog posts' });
+    }
+  }
+
+  if (parts[0] === 'api' && parts[1] === 'blog' && parts[2] && !parts[3] && req.method === 'GET') {
+    try {
+      const post = await getBlogPostBySlug(parts[2], { includeDrafts: false });
+      if (!post) return json(res, 404, { error: 'Post not found' });
+      return json(res, 200, { post });
+    } catch (e) {
+      return json(res, 500, { error: e?.message || 'Failed to load post' });
+    }
+  }
+
+  // ── Blog (admin) ─────────────────────────────────────────────────────────────
+
+  if (pathname === '/api/admin/blog' && req.method === 'GET') {
+    const auth = requireAdmin(req);
+    if (!auth.ok) return json(res, auth.status, { error: auth.error });
+    try {
+      const posts = await listBlogPosts({ includeDrafts: true });
+      return json(res, 200, { posts });
+    } catch (e) {
+      return json(res, 500, { error: e?.message || 'Failed to load blog posts' });
+    }
+  }
+
+  if (pathname === '/api/admin/blog' && req.method === 'POST') {
+    const auth = requireAdmin(req);
+    if (!auth.ok) return json(res, auth.status, { error: auth.error });
+    const body = await readJsonBody(req);
+    if (!body) return json(res, 400, { error: 'Invalid JSON body' });
+    const { title, slug, excerpt, content, cover_image, published } = body;
+    if (!title || typeof title !== 'string') return json(res, 400, { error: 'title is required' });
+    if (!slug || typeof slug !== 'string') return json(res, 400, { error: 'slug is required' });
+    try {
+      const post = await createBlogPost({ title, slug, excerpt, content, cover_image, published });
+      return json(res, 200, { post });
+    } catch (e) {
+      return json(res, 500, { error: e?.message || 'Failed to create post' });
+    }
+  }
+
+  if (parts[0] === 'api' && parts[1] === 'admin' && parts[2] === 'blog' && parts[3] && req.method === 'PUT') {
+    const auth = requireAdmin(req);
+    if (!auth.ok) return json(res, auth.status, { error: auth.error });
+    const body = await readJsonBody(req);
+    if (!body) return json(res, 400, { error: 'Invalid JSON body' });
+    const { title, slug, excerpt, content, cover_image, published } = body;
+    if (!title || typeof title !== 'string') return json(res, 400, { error: 'title is required' });
+    if (!slug || typeof slug !== 'string') return json(res, 400, { error: 'slug is required' });
+    try {
+      const post = await updateBlogPost(parts[3], { title, slug, excerpt, content, cover_image, published });
+      return json(res, 200, { post });
+    } catch (e) {
+      return json(res, 500, { error: e?.message || 'Failed to update post' });
+    }
+  }
+
+  if (parts[0] === 'api' && parts[1] === 'admin' && parts[2] === 'blog' && parts[3] && req.method === 'DELETE') {
+    const auth = requireAdmin(req);
+    if (!auth.ok) return json(res, auth.status, { error: auth.error });
+    try {
+      await deleteBlogPost(parts[3]);
+      return json(res, 200, { ok: true });
+    } catch (e) {
+      return json(res, 500, { error: e?.message || 'Failed to delete post' });
     }
   }
 

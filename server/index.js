@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import Stripe from 'stripe';
 import { SERVICE_CATALOG } from './lib/catalog.js';
-import { createProject, createSignedUpload, getProjectById, isStripeEventProcessed, listProjectFiles, markPaid, markStripeEventProcessed, recordProjectFiles, setStripeSession } from './lib/supabaseStore.js';
+import { createProject, createSignedUpload, getProjectById, isStripeEventProcessed, listProjectFiles, markPaid, markStripeEventProcessed, recordProjectFiles, setStripeSession, listBlogPosts, getBlogPostBySlug, createBlogPost, updateBlogPost, deleteBlogPost } from './lib/supabaseStore.js';
 import { renderOwnerEmailHtml, renderOwnerEmailText, sendOwnerEmail, sendEmail, renderBookingConfirmationHtml, renderBookingConfirmationText, renderInquiryConfirmationHtml, renderInquiryConfirmationText } from './lib/email.js';
 import crypto from 'node:crypto';
 import { getSupabaseAdmin } from './lib/supabaseAdmin.js';
@@ -714,6 +714,71 @@ app.get('/api/checkout/session-status', async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ error: error?.message || 'Failed to fetch session status' });
+  }
+});
+
+// ── Blog (public) ─────────────────────────────────────────────────────────────
+
+app.get('/api/blog', async (_req, res) => {
+  try {
+    const posts = await listBlogPosts({ includeDrafts: false });
+    return res.json({ posts });
+  } catch (error) {
+    return res.status(500).json({ error: error?.message || 'Failed to load blog posts' });
+  }
+});
+
+app.get('/api/blog/:slug', async (req, res) => {
+  try {
+    const post = await getBlogPostBySlug(req.params.slug, { includeDrafts: false });
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    return res.json({ post });
+  } catch (error) {
+    return res.status(500).json({ error: error?.message || 'Failed to load post' });
+  }
+});
+
+// ── Blog (admin) ───────────────────────────────────────────────────────────────
+
+app.get('/api/admin/blog', requireAdmin, async (_req, res) => {
+  try {
+    const posts = await listBlogPosts({ includeDrafts: true });
+    return res.json({ posts });
+  } catch (error) {
+    return res.status(500).json({ error: error?.message || 'Failed to load blog posts' });
+  }
+});
+
+app.post('/api/admin/blog', requireAdmin, async (req, res) => {
+  try {
+    const { title, slug, excerpt, content, cover_image, published } = req.body || {};
+    if (!title || typeof title !== 'string') return res.status(400).json({ error: 'title is required' });
+    if (!slug || typeof slug !== 'string') return res.status(400).json({ error: 'slug is required' });
+    const post = await createBlogPost({ title, slug, excerpt, content, cover_image, published });
+    return res.json({ post });
+  } catch (error) {
+    return res.status(500).json({ error: error?.message || 'Failed to create post' });
+  }
+});
+
+app.put('/api/admin/blog/:id', requireAdmin, async (req, res) => {
+  try {
+    const { title, slug, excerpt, content, cover_image, published } = req.body || {};
+    if (!title || typeof title !== 'string') return res.status(400).json({ error: 'title is required' });
+    if (!slug || typeof slug !== 'string') return res.status(400).json({ error: 'slug is required' });
+    const post = await updateBlogPost(req.params.id, { title, slug, excerpt, content, cover_image, published });
+    return res.json({ post });
+  } catch (error) {
+    return res.status(500).json({ error: error?.message || 'Failed to update post' });
+  }
+});
+
+app.delete('/api/admin/blog/:id', requireAdmin, async (req, res) => {
+  try {
+    await deleteBlogPost(req.params.id);
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: error?.message || 'Failed to delete post' });
   }
 });
 

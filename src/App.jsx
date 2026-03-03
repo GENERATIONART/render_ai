@@ -14,6 +14,8 @@ const CustomProjectPage = React.lazy(() => import('./pages/CustomProjectPage.jsx
 const ConfirmationPage = React.lazy(() => import('./pages/ConfirmationPage.jsx'));
 const InquiryConfirmationPage = React.lazy(() => import('./pages/InquiryConfirmationPage.jsx'));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage.jsx'));
+const BlogPage = React.lazy(() => import('./pages/BlogPage.jsx'));
+const BlogPostPage = React.lazy(() => import('./pages/BlogPostPage.jsx'));
 
 class AppErrorBoundary extends React.Component {
   constructor(props) {
@@ -112,6 +114,7 @@ const Header = ({ compact = false }) => {
         <li><Link to="/portfolio" style={{ textDecoration: 'none', color: 'inherit' }}>Portfolio</Link></li>
         <li><Link to="/#contact" style={{ textDecoration: 'none', color: 'inherit' }}>Contact</Link></li>
         <li><Link to="/about" style={{ textDecoration: 'none', color: 'inherit' }}>About</Link></li>
+        <li><Link to="/blog" style={{ textDecoration: 'none', color: 'inherit' }}>Blog</Link></li>
       </ul>
     </nav>
   );
@@ -668,6 +671,17 @@ const AppFrame = ({ portfolioItems, siteCopy, servicePrices }) => {
                 <CustomProjectPage servicePrices={servicePrices} />
               </>
             } />
+            <Route path="/blog" element={
+              <>
+                <PageMeta
+                  title="Blog | Architectural Visualization Insights | Render AI"
+                  description="Insights on architectural visualization, 3D rendering, design trends, and the art of bringing spaces to life before they're built."
+                  canonical="/blog"
+                />
+                <BlogPage />
+              </>
+            } />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/confirmation" element={<ConfirmationPage />} />
             <Route path="/inquiry-confirmation" element={<InquiryConfirmationPage />} />
             <Route path="*" element={<NotFoundPage />} />

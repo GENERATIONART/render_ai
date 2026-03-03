@@ -365,6 +365,16 @@ app.post('/api/webhooks/stripe', async (req, res) => {
             text,
             tags: [{ name: 'type', value: 'payment_received' }]
           });
+
+          if (project?.email) {
+            await sendEmail({
+              to: project.email,
+              subject: 'Your Render AI order is confirmed',
+              html: renderBookingConfirmationHtml({ customerName: project.customer_name || '', serviceName, projectId }),
+              text: renderBookingConfirmationText({ customerName: project.customer_name || '', serviceName, projectId }),
+              tags: [{ name: 'type', value: 'booking_confirmation' }]
+            });
+          }
         } catch (error) {
           // Best-effort; returning 500 would cause Stripe retries.
           // eslint-disable-next-line no-console
@@ -434,57 +444,6 @@ app.post('/api/projects', async (req, res) => {
       projectInfo: finalProjectInfo,
       amountCents
     });
-
-    try {
-      const html = renderOwnerEmailHtml({
-        title: 'New Booking Created',
-        rows: [
-          { label: 'Project ID', value: project.id },
-          { label: 'Service', value: serviceName },
-          { label: 'Name', value: fullName.trim() },
-          { label: 'Business', value: (typeof businessName === 'string' && businessName.trim()) || '(none)' },
-          { label: 'Email', value: email },
-          { label: 'Project Info', value: projectInfo || '(none)' }
-        ],
-        footer: 'This email was sent when the booking form was submitted.'
-      });
-      const text = renderOwnerEmailText({
-        title: 'New Booking Created',
-        rows: [
-          { label: 'Project ID', value: project.id },
-          { label: 'Service', value: serviceName },
-          { label: 'Name', value: fullName.trim() },
-          { label: 'Business', value: (typeof businessName === 'string' && businessName.trim()) || '(none)' },
-          { label: 'Email', value: email },
-          { label: 'Project Info', value: projectInfo || '(none)' }
-        ],
-        footer: 'This email was sent when the booking form was submitted.'
-      });
-
-      await sendOwnerEmail({
-        subject: `New booking: ${serviceName}`,
-        html,
-        text,
-        tags: [{ name: 'type', value: 'booking_created' }]
-      });
-    } catch (error) {
-      // Best-effort: don't block checkout if email fails.
-      // eslint-disable-next-line no-console
-      console.error('[email] booking_created failed', error);
-    }
-
-    try {
-      await sendEmail({
-        to: email,
-        subject: 'Your Render AI order is confirmed',
-        html: renderBookingConfirmationHtml({ customerName: fullName.trim(), serviceName, projectId: project.id }),
-        text: renderBookingConfirmationText({ customerName: fullName.trim(), serviceName, projectId: project.id }),
-        tags: [{ name: 'type', value: 'booking_confirmation' }]
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('[email] booking_confirmation customer email failed', error);
-    }
 
     return res.json({ projectId: project.id });
   } catch (error) {

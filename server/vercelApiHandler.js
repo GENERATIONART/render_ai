@@ -348,48 +348,6 @@ export default async function handler(req, res) {
         projectInfo
       });
 
-      try {
-        const html = renderOwnerEmailHtml({
-          title: 'New Booking Created',
-          rows: [
-            { label: 'Project ID', value: project.id },
-            { label: 'Service', value: serviceName },
-            { label: 'Name', value: fullName.trim() },
-            { label: 'Business', value: (typeof businessName === 'string' && businessName.trim()) || '(none)' },
-            { label: 'Email', value: email },
-            { label: 'Project Info', value: projectInfo || '(none)' }
-          ],
-          footer: 'This email was sent when the booking form was submitted.'
-        });
-        const text = renderOwnerEmailText({
-          title: 'New Booking Created',
-          rows: [
-            { label: 'Project ID', value: project.id },
-            { label: 'Service', value: serviceName },
-            { label: 'Name', value: fullName.trim() },
-            { label: 'Business', value: (typeof businessName === 'string' && businessName.trim()) || '(none)' },
-            { label: 'Email', value: email },
-            { label: 'Project Info', value: projectInfo || '(none)' }
-          ],
-          footer: 'This email was sent when the booking form was submitted.'
-        });
-        await sendOwnerEmail({ subject: `New booking: ${serviceName}`, html, text, tags: [{ name: 'type', value: 'booking_created' }] });
-      } catch {
-        // best effort
-      }
-
-      try {
-        await sendEmail({
-          to: email,
-          subject: 'Your Render AI order is confirmed',
-          html: renderBookingConfirmationHtml({ customerName: fullName.trim(), serviceName, projectId: project.id }),
-          text: renderBookingConfirmationText({ customerName: fullName.trim(), serviceName, projectId: project.id }),
-          tags: [{ name: 'type', value: 'booking_confirmation' }]
-        });
-      } catch {
-        // best effort
-      }
-
       return json(res, 200, { projectId: project.id, project });
     } catch (e) {
       return json(res, 500, { error: e?.message || 'Failed to create project' });
@@ -672,6 +630,16 @@ export default async function handler(req, res) {
               footer: 'This email was sent from the Stripe webhook after successful payment.'
             });
             await sendOwnerEmail({ subject: `Payment received: ${serviceName || 'service'}`, html, text, tags: [{ name: 'type', value: 'payment_received' }] });
+
+            if (project?.email) {
+              await sendEmail({
+                to: project.email,
+                subject: 'Your Render AI order is confirmed',
+                html: renderBookingConfirmationHtml({ customerName: project.customer_name || '', serviceName, projectId }),
+                text: renderBookingConfirmationText({ customerName: project.customer_name || '', serviceName, projectId }),
+                tags: [{ name: 'type', value: 'booking_confirmation' }]
+              });
+            }
           } catch {
             // best effort
           }

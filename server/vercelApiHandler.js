@@ -339,18 +339,51 @@ export default async function handler(req, res) {
   if (pathname === '/api/projects' && req.method === 'POST') {
     const body = await readJsonBody(req);
     if (!body) return json(res, 400, { error: 'Invalid JSON body' });
-    const { email, fullName, businessName, serviceName, projectInfo } = body;
+    const { email, fullName, businessName, serviceName, projectInfo, selectedServices } = body;
     if (!email || typeof email !== 'string') return json(res, 400, { error: 'email is required' });
     if (!fullName || typeof fullName !== 'string') return json(res, 400, { error: 'fullName is required' });
     if (!serviceName || typeof serviceName !== 'string') return json(res, 400, { error: 'serviceName is required' });
 
     try {
+      let finalProjectInfo = projectInfo || null;
+      let amountCents;
+
+      if (serviceName === 'custom') {
+        if (!Array.isArray(selectedServices) || selectedServices.length === 0) {
+          return json(res, 400, { error: 'selectedServices is required for custom bundles' });
+        }
+        const validKeys = selectedServices.filter(k => typeof k === 'string' && SERVICE_CATALOG[k]);
+        if (validKeys.length === 0) {
+          return json(res, 400, { error: 'No valid services selected' });
+        }
+        const supabaseAdmin = getSupabaseAdmin();
+        let totalUsd = 0;
+        const serviceLines = [];
+        for (const key of validKeys) {
+          const item = SERVICE_CATALOG[key];
+          let price = item.amountUsd;
+          try {
+            const { data } = await supabaseAdmin.from('site_copy').select('value').eq('key', `service.price.${key}`).single();
+            if (data?.value) {
+              const parsed = parseFloat(data.value);
+              if (!isNaN(parsed) && parsed > 0) price = parsed;
+            }
+          } catch { /* use catalog default */ }
+          totalUsd += price;
+          serviceLines.push(item.title);
+        }
+        amountCents = Math.round(totalUsd * 100);
+        const servicesText = `Services: ${serviceLines.join(', ')}`;
+        finalProjectInfo = projectInfo ? `${servicesText}\n\n${projectInfo}` : servicesText;
+      }
+
       const project = await createProject({
         email,
         fullName: fullName.trim(),
         businessName: typeof businessName === 'string' ? businessName.trim() : '',
         serviceName,
-        projectInfo
+        projectInfo: finalProjectInfo,
+        amountCents
       });
 
       return json(res, 200, { projectId: project.id, project });
@@ -499,21 +532,38 @@ export default async function handler(req, res) {
       const project = await getProjectById(projectId);
       if (!project) return json(res, 404, { error: 'project not found' });
       const serviceName = project.service_name || project.serviceName;
-      const catalogItem = SERVICE_CATALOG[serviceName];
-      if (!catalogItem) return json(res, 400, { error: `Unknown serviceName: ${serviceName}` });
 
-      let amountUsd = catalogItem.amountUsd;
-      try {
-        const supabase = getSupabaseAdmin();
-        const { data } = await supabase.from('site_copy').select('value').eq('key', `service.price.${serviceName}`).single();
-        if (data?.value) {
-          const parsed = parseFloat(data.value);
-          if (!isNaN(parsed) && parsed > 0) amountUsd = parsed;
+      let unitAmount, productName, productDescription, cancelUrl;
+
+      if (serviceName === 'custom') {
+        const storedCents = project.amount_cents;
+        if (!storedCents || storedCents <= 0) {
+          return json(res, 400, { error: 'Invalid amount for custom bundle' });
         }
-      } catch { /* use catalog default */ }
+        unitAmount = storedCents;
+        productName = 'Custom Rendering Bundle';
+        productDescription = project.project_info || project.projectInfo || undefined;
+        cancelUrl = `${APP_URL}/custom`;
+      } else {
+        const catalogItem = SERVICE_CATALOG[serviceName];
+        if (!catalogItem) return json(res, 400, { error: `Unknown serviceName: ${serviceName}` });
+
+        let amountUsd = catalogItem.amountUsd;
+        try {
+          const supabase = getSupabaseAdmin();
+          const { data } = await supabase.from('site_copy').select('value').eq('key', `service.price.${serviceName}`).single();
+          if (data?.value) {
+            const parsed = parseFloat(data.value);
+            if (!isNaN(parsed) && parsed > 0) amountUsd = parsed;
+          }
+        } catch { /* use catalog default */ }
+        unitAmount = Math.round(amountUsd * 100);
+        productName = `${catalogItem.title} (4K)`;
+        productDescription = project.project_info || project.projectInfo || undefined;
+        cancelUrl = `${APP_URL}/${encodeURIComponent(serviceName)}`;
+      }
 
       const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
-      const unitAmount = Math.round(amountUsd * 100);
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         client_reference_id: projectId,
@@ -526,15 +576,15 @@ export default async function handler(req, res) {
               currency: 'usd',
               unit_amount: unitAmount,
               product_data: {
-                name: `${catalogItem.title} (4K)`,
-                description: project.project_info || project.projectInfo || undefined,
+                name: productName,
+                description: productDescription,
                 ...(STRIPE_TAX_CODE ? { tax_code: STRIPE_TAX_CODE } : {})
               }
             }
           }
         ],
         success_url: `${APP_URL}/confirmation?projectId=${encodeURIComponent(projectId)}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${APP_URL}/${encodeURIComponent(serviceName)}`
+        cancel_url: cancelUrl
       });
 
       await setStripeSession(projectId, { sessionId: session.id, paymentStatus: session.payment_status });
